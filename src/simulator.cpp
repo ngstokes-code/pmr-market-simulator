@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include "simulator.hpp"
 
 #include <cmath>
@@ -109,8 +110,8 @@ void Simulator::run() {
       std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
   double evps = (cfg_.total_events * 1e6) / (double)us;
 
-  std::cout << "📊 MarketSim (PMR) Report\n"
-            << "──────────────────────────\n"
+  std::cout << "MarketSim (PMR) Report\n"
+            << "---------------------------\n"
             << "Symbols:           " << syms_.size() << "\n"
             << "Total events:      " << cfg_.total_events << "\n"
             << "Adds:              " << adds << "\n"
@@ -126,7 +127,7 @@ void Simulator::run() {
                 << kv.second.mem->counter.bytes_allocated() << " bytes\n";
     }
   }
-  std::cout << "──────────────────────────\n";
+  std::cout << "---------------------------\n";
 }
 
 }  // namespace msim

@@ -3,15 +3,9 @@
 namespace msim {
 
 OrderBook::OrderBook(std::string symbol, std::pmr::memory_resource* mr)
-    : bids_(
-          std::greater<double>(),
-          std::pmr::polymorphic_allocator<std::pair<const double, Queue>>(mr)),
-      asks_(
-          std::less<double>(),
-          std::pmr::polymorphic_allocator<std::pair<const double, Queue>>(mr)),
-      index_(
-          std::less<uint64_t>(),
-          std::pmr::polymorphic_allocator<std::pair<const double, Queue>>(mr)),
+    : bids_(std::greater<double>(), BidMap::allocator_type(mr)),
+      asks_(std::less<double>(), AskMap::allocator_type(mr)),
+      index_(std::less<uint64_t>(), IndexMap::allocator_type(mr)),
       symbol_(std::move(symbol)),
       mr_(mr) {}
 
