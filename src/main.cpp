@@ -2,7 +2,8 @@
 #include <iostream>
 #include <sstream>
 
-#include "simulator.hpp"
+#include "msim/lmdb_reader.hpp"
+#include "msim/simulator.hpp"
 
 using namespace msim;
 
@@ -17,6 +18,9 @@ static std::vector<std::string> split_csv(const std::string& s) {
 
 int main(int argc, char** argv) {
   SimConfig cfg;
+  bool read_mode = false;
+  std::string read_path;
+
   for (int i = 1; i < argc; ++i) {
     std::string a = argv[i];
     if (a == "--events" && i + 1 < argc)
@@ -37,7 +41,15 @@ int main(int argc, char** argv) {
       cfg.log_path = argv[++i];
     else if (a == "--print-arena")
       cfg.print_arena = true;
-    else if (a == "--help") {
+    else if (a == "--dump" && i + 1 < argc)
+      cfg.dump_n = std::stoi(argv[++i]);
+    else if (a == "--read" && i + 1 < argc) {
+      read_mode = true;
+      if (i + 1 < argc && argv[i + 1][0] != '-')
+        read_path = argv[++i];
+      else
+        read_path = "store.mdb";
+    } else if (a == "--help") {
       std::cout
           << "Usage: ./market_sim [options]\n"
           << "  --events N           Total events (default 100000)\n"
@@ -49,11 +61,45 @@ int main(int argc, char** argv) {
           << "  --drift-ampl A       Volatility drift amplitude (default 0.0)\n"
           << "  --drift-period P     Drift period in events (default 10000)\n"
           << "  --log PATH           Append-only event log path\n"
-          << "  --print-arena        Print arena upstream usage\n";
+          << "  --print-arena        Print arena upstream usage\n"
+          << "  --read PATH          Read and dump LMDB log instead of sim\n";
       return 0;
     }
   }
-  Simulator sim(cfg);
-  sim.run();
+
+  try {
+    if (read_mode) {
+      LMDBReader reader(
+          (read_path.empty() ? std::string("store.mdb") : read_path));
+      auto symbols = reader.list_symbols();
+      if (symbols.empty()) {
+        std::cout << "No symbols found in " << read_path << "\n";
+        return 0;
+      }
+
+      std::cout << "Found " << symbols.size() << " symbol(s): ";
+      for (auto& s : symbols) std::cout << s << " ";
+      std::cout << "\n";
+
+      for (auto& sym : symbols) {
+        auto events = reader.read_all(sym);
+        std::cout << sym << ": " << events.size() << " events\n";
+
+        if (!events.empty() && cfg.dump_n > 0) {
+          int n = std::min<int>(cfg.dump_n, events.size());
+          std::cout << "First " << n << " events:\n";
+          for (int i = 0; i < n; ++i)
+            std::cout << " " << events[i].to_string() << "\n";
+        }
+      }
+      return 0;
+    }
+    Simulator sim(cfg);
+    sim.run();
+  } catch (const std::exception& ex) {
+    std::cerr << "Error: " << ex.what() << "\n";
+    return 1;
+  }
+
   return 0;
 }

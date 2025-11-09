@@ -21,6 +21,7 @@ struct SimConfig {
   uint64_t drift_period = 10000;
   std::string log_path;
   bool print_arena = false;
+  int dump_n = 0;  // number of events to print when reading
 };
 
 class Simulator {

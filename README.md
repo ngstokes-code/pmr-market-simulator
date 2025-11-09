@@ -1,13 +1,13 @@
 
 # PMR Market Simulator (C++17)
 
-A **low-latency event-driven market simulator** demonstrating
-modern **C++17 polymorphic memory resources (`std::pmr`)**, allocator design,
-and high-throughput event loops.
+A **low-latency, allocator-aware, event-driven market simulator** demonstrating
+modern **C++17 polymorphic memory resources** (`std::pmr`), custom allocator design,
+and high-throughput event processing.
 
-The simulator models multiple independent order books with Gaussian-sampled
-order prices and an optional sinusoidal price drift, sustaining over half a million
-events per second in Debug mode on commodity hardware.
+It models multiple independent order books with Gaussian-sampled order prices and
+optional sinusoidal drift – sustaining 500k+ events/sec in Debug and 2-3M+ events
+in Release (LTO) on commodity hardware.
 
 ---
 
@@ -15,27 +15,28 @@ events per second in Debug mode on commodity hardware.
 
 |Component|Purpose|
 |------------|----------|
-|**`OrderBook`**|Per-symbol book with PMR-based bids / asks / index maps and strict price–time priority.|
-|**`Simulator`**|Generates and processes add / cancel / trade events with Gaussian sampling around a drifting midprice.|
-|**`Storage`**|Append-only binary event logs (LMDB adapter planned).|
-|**`pmr_utils`**|Counting upstream allocator for memory-usage telemetry.|
+|**`OrderBook`**|Per-symbol price-time order book with PMR-based bids / asks / index maps and strict price–time priority.|
+|**`Simulator`**|Event engine generating add / cancel / trade flows with Gaussian price sampling with optional drifting midprice.|
+|**`LMDBStorage`**|Durable, per-symbol append-only event log using Lightning Memory-Mapped Database (LMDB).|
+|**`LMDBReader`**|Offline reader for verifying and replaying persisted LMDB event streams.|
+|**`pmr_utils`**|Custom counting upstream allocator for precise arena telemetry.|
 
 ---
 
-## 🔩 Key Features
+## 🔩 Core Features
 
-- Per-symbol **monotonic arenas** via `std::pmr::monotonic_buffer_resource`
-- Zero heap churn in the event loop
-- Gaussian price generation around a dynamic midprice (`std::normal_distribution`)
+- Per-symbol **monotonic arenas** (`std::pmr::monotonic_buffer_resource`)
+- **Zero heap churn** in hot paths (event loop fully preallocated)
+- **Gaussian-sampled prices** around a drifting midprice (`std::normal_distribution`)
 - Optional **sinusoidal drift** to simulate cyclical volatility:
     - price = mid * (1.0 + drift_ampl * sin(2π * event / drift_period))
-- Append-only binary log (swappable for LMDB)
-- Lightweight allocator stats from a counting upstream resource
+- LMDB persistence for **durable replayable event logs**
+- Precise allocator telemetry (bytes requested per symbol)
 - Fully parameterized via CLI flags
 
 ---
 
-## 🧪 Example Run
+## 🧪 Example Simulation
 
 ```text
 MarketSim (PMR) Report
@@ -49,11 +50,39 @@ Elapsed:           187.1 ms
 Throughput:        534,550 ev/s  (Debug build, Ryzen 7 5800X)
 ---------------------------
 ```
-⚙️ *On a Ryzen 7 5800X, a Release + LTO build typically **sustains 2–3 million events/sec (single thread)**. Performance **scales linearly with symbols and event count**; each std::pmr arena isolates per-symbol allocations to avoid cross-thread contention*
+⚙️ *On a Ryzen 7 5800X, Release + LTO builds typically sustain **2–3 million events/sec** single-threaded.<br>Performance scales linearly with symbol count and event volume.*
 
 ---
 
-## 📊 Benchmarks (single thread)
+## 🗃️ Replay Mode (LMDB Round-Trip)
+
+Generate, persist, and replay market events from LMDB.
+```bash
+# 1. Generate a persistent LMDB log
+./market_sim --symbols AAPL,MSFT,GOOG --events 10000 --log store.mdb
+
+# 2. Read and summarize stored events
+./market_sim --read store.mdb
+
+# 3. Inspect the first 5 events per symbol
+./market_sim --read store.mdb --dump 5
+```
+
+### Sample Output
+```
+Found 3 symbol(s): AAPL GOOG MSFT
+AAPL: 3043 events
+First 5 events:
+ [ADD] AAPL 99.79 x 39 (S) t=502533332403200
+ [TRD] AAPL 99.60 x 73 (S) t=502533293606400
+ [ADD] AAPL 99.64 x 90 (B) t=502533333190400
+ [TRD] AAPL 99.53 x 16 (S) t=502533342694400
+ [ADD] AAPL 99.52 x 18 (B) t=502533292428800
+```
+
+---
+
+## 📊 Benchmarks (single-threaded)
 
 | Build   | Symbols | Events | Time (ms) | Throughput (ev/s) | Notes        |
 | ------- | ------- | ------ | --------- | ----------------- | ------------ |
@@ -65,12 +94,16 @@ Throughput:        534,550 ev/s  (Debug build, Ryzen 7 5800X)
 
 ---
 
-## 🔧 Build
+## 🔧 Build & Run
 
 ```bash
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . -j
+```
+
+## Example Run
+```bash
 ./market_sim \
   --symbols AAPL,MSFT,GOOG \
   --events 200000 \
@@ -78,41 +111,44 @@ cmake --build . -j
   --drift-ampl 0.002 \
   --drift-period 10000 \
   --arena-bytes 1048576 \
-  --log events.bin \
+  --log store.mdb \
   --print-arena
 ```
 
 ## ⚙️ CLI flags
-| Flag                  | Description                       | Default          |
-| --------------------- | --------------------------------- | ---------------- |
-| `--events N`          | Total events to simulate          | 100 000          |
-| `--symbols CSV`       | Comma-separated symbol list       | AAPL, MSFT, GOOG |
-| `--sigma X`           | Gaussian sigma as fraction of mid | 0.001            |
-| `--drift-ampl A`      | Sinusoidal drift amplitude        | 0.0 (off)        |
-| `--drift-period P`    | Drift period in events            | 10 000           |
-| `--arena-bytes BYTES` | Arena size per symbol             | 1 MiB            |
-| `--log PATH`          | Binary log output path            | none             |
-| `--print-arena`       | Print allocator usage summary     | off              |
+| Flag                  | Description                                   | Default          |
+| --------------------- | --------------------------------------------- | ---------------- |
+| `--events N`          | Total events to simulate                      | 100 000          |
+| `--symbols CSV`       | Comma-separated symbol list                   | AAPL, MSFT, GOOG |
+| `--sigma X`           | Gaussian sigma as fraction of midprice        | 0.001       |
+| `--drift-ampl A`      | Sinusoidal drift amplitude                    | 0.0 (off)        |
+| `--drift-period P`    | Drift period in events                        | 10 000           |
+| `--arena-bytes BYTES` | Arena size per symbol                         | 1 MiB            |
+| `--log PATH`          | LMDB output path                              | none             |
+| `--read PATH`         | Replay events from LMDB                       | none             |
+| `--dump N`            | When reading, print first N events per symbol | none             |
+| `--print-arena`       | Print allocator usage summary                 | off              |
 
 
 ---
 
-## 🧭 Design Notes
+## 🧭 Design Principles
 
-- **Linear scalability**: cost ∝ (symbols * events)
-- **Allocator efficiency**: PMR arenas recycle memory; no per-event new/delete
-- **Cache locality**: deques + maps remain inside per-symbol arenas
-- **Extensibility**: abstract `IStorage` enables LMDB or mmap back-ends
-- **Portability**: C++17, no external dependencies
+- **Allocator locality** -> per-symbol arenas eliminate cross-thread contention
+- **Linear scalability** -> cost ≈ O(symbols × events)
+- **Deterministic performance** -> no runtime allocations during event loop (zero heap churn)
+- **Extensible I/O** -> abstract `IStorage` enables LMDB, mmap, or gRPC back-ends
+- **Portable** -> header-only STL + LMDB C library (no external dependencies)
 
 ---
 
-## 🚀 Next steps
-- Implement `LMDBStorage : IStorage` and swap via `make_storage()`
-- Add `market.proto` + gRPC tick stream
-- Replace `std::pmr::map` SoA flat price levels
-- Add real-time CSV / ImGui midprice visualization
-- Add latency & allocation profiling
+## 🚀 Roadmap
+- [x] `LMDBStorage` persistence
+- [x] `LMDBReader` replay + `--dump` mode
+- [ ] Add `market.proto` + gRPC tick stream
+- [ ] Flat SoA price levels (replace `std::pmr::map`)
+- [ ] Real-time visualization (ImGui / CSV)
+- [ ] Latency & allocator profiling tools
 
 ---
 
