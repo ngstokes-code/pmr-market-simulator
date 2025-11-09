@@ -1,5 +1,12 @@
-
 # PMR Market Simulator (C++17)
+![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey.svg)
+![Performance](https://img.shields.io/badge/Throughput-2--3M%20ev%2Fs%20%E2%80%94%20Release-orange.svg)
+![Persistence](https://img.shields.io/badge/Storage-LMDB-critical.svg)
+![Build](https://img.shields.io/badge/Build-CMake-darkblue.svg)
+![Memory](https://img.shields.io/badge/Arena-std%3A%3Apmr%20Monotonic-success.svg)
+![Allocator](https://img.shields.io/badge/Allocator-aware-9cf.svg)
 
 A **low-latency, allocator-aware, event-driven market simulator** demonstrating
 modern **C++17 polymorphic memory resources** (`std::pmr`), custom allocator design,
