@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdio>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -22,23 +23,17 @@ struct NullStorage : IStorage {
 
 class BinaryLogStorage : public IStorage {
  public:
-  explicit BinaryLogStorage(const std::string& path) {
-    fp_ = std::fopen(path.c_str(), "wb");
-    if (!fp_) throw std::runtime_error("open log failed");
-  }
-  ~BinaryLogStorage() {
-    if (fp_) std::fclose(fp_);
-  }
-  void write(const Event& e) override {
-    auto b = e.serialize();
-    uint32_t n = static_cast<uint32_t>(b.size());
-    std::fwrite(&n, sizeof(n), 1, fp_);
-    std::fwrite(b.data(), 1, b.size(), fp_);
-  }
-  void flush() override { std::fflush(fp_); }
+  explicit BinaryLogStorage(const std::string& path);
+  ~BinaryLogStorage();
+
+  void write(const Event& e) override;
+  void flush() override;
 
  private:
   std::FILE* fp_{nullptr};
+  std::mutex mtx_;
+  std::vector<char> buf_;
+  size_t batch_bytes_;
 };
 
 std::unique_ptr<IStorage> make_storage(const std::string& path);

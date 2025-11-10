@@ -18,6 +18,7 @@ static std::vector<std::string> split_csv(const std::string& s) {
 
 int main(int argc, char** argv) {
   SimConfig cfg;
+  bool no_log = false;
   bool read_mode = false;
   std::string read_path;
 
@@ -49,6 +50,11 @@ int main(int argc, char** argv) {
         read_path = argv[++i];
       else
         read_path = "store.mdb";
+    } else if (a == "--threads" && i + 1 < argc)
+      cfg.num_threads = std::stoi(argv[++i]);
+    else if (a == "--no-log") {
+      no_log = true;
+      cfg.log_path.clear();
     } else if (a == "--help") {
       std::cout
           << "Usage: ./market_sim [options]\n"
@@ -62,12 +68,21 @@ int main(int argc, char** argv) {
           << "  --drift-period P     Drift period in events (default 10000)\n"
           << "  --log PATH           Append-only event log path\n"
           << "  --print-arena        Print arena upstream usage\n"
-          << "  --read PATH          Read and dump LMDB log instead of sim\n";
+          << "  --read PATH          Read and dump LMDB log instead of sim\n"
+          << "  --dump N             Number of events to print per-symbol "
+             "(default 0)\n";
       return 0;
     }
   }
 
   try {
+    if (no_log) cfg.log_path.clear();
+
+    if (cfg.num_threads > 1 && cfg.log_path.find(".mdb") != std::string::npos) {
+      std::cerr << "[WARN] LMDB logging not thread-safe; disabling logging\n";
+      cfg.log_path.clear();
+    }
+
     if (read_mode) {
       LMDBReader reader(
           (read_path.empty() ? std::string("store.mdb") : read_path));
@@ -94,8 +109,9 @@ int main(int argc, char** argv) {
       }
       return 0;
     }
+    std::cout.setf(std::ios::unitbuf);
     Simulator sim(cfg);
-    sim.run();
+    (cfg.num_threads > 1) ? sim.run_mt() : sim.run();
   } catch (const std::exception& ex) {
     std::cerr << "Error: " << ex.what() << "\n";
     return 1;

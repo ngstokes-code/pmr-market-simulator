@@ -15,7 +15,7 @@ class LMDBStorage final : public IStorage {
   std::unordered_map<std::string, MDB_dbi> dbis_;
   std::string path_;
   size_t batch_count_ = 0;
-  const size_t batch_limit_ = 1000;
+  const size_t batch_limit_ = 10000;  // commit every 10k writes
 
  public:
   explicit LMDBStorage(const std::string& path,
