@@ -21,15 +21,21 @@ struct SimConfig {
   uint64_t drift_period = 10000;
   std::string log_path;
   bool print_arena = false;
-  int dump_n = 0;  // number of events to print when reading
+  int dump_n = 0;       // number of events to print when reading
+  int num_threads = 1;  // default single-thread
 };
 
 class Simulator {
  public:
   explicit Simulator(SimConfig cfg);
   void run();
+  void run_mt();  // multithreaded / NUMA-aware version
 
  private:
+  static void bind_to_core(
+      size_t cord_id);  // Pins the calling thread to `core_id` to ensure
+                        // NUMA-local allocations.
+
   SimConfig cfg_;
   std::mt19937_64 rng_;
 
@@ -49,16 +55,34 @@ class Simulator {
     double mid = 100.0;
   };
 
+  struct ThreadContext {
+    std::vector<std::string> symbols;  // symbols assigned to this thread
+    std::unique_ptr<ArenaBundle> arena;
+    std::unordered_map<std::string, std::unique_ptr<OrderBook>> books;
+    std::unordered_map<std::string, double> mid;  // local midprice per symbol
+    std::unordered_map<std::string, std::vector<uint64_t>>
+        live;  // live order ids
+
+    std::mt19937_64
+        rng;  // local RNG avoids cache contention on a shared generator
+    uint64_t adds = 0;
+    uint64_t cancels = 0;
+    uint64_t trades = 0;
+    uint64_t total_events = 0;  // total events processed by this thread
+    double elapsed_ms = 0.0;    // timing for this thread
+  };
+
   std::unordered_map<std::string, SymState> syms_;
   std::unique_ptr<IStorage> storage_;
   std::uniform_int_distribution<int> qty_dist_{1, 100};
   std::bernoulli_distribution side_dist_{0.5};
   std::bernoulli_distribution add_dist_{0.9};
-
   uint64_t next_order_id_ = 1;
 
   uint64_t now_ns() const;
-  double draw_price(const std::string& s, uint64_t i_event);
+  double draw_price(const std::string& s, uint64_t i_event);  // single-thread
+  double draw_price(double mid, uint64_t i_event,
+                    std::mt19937_64& rng);  // multi-thread
   void emit_event(const Event& e);
   static std::vector<std::string> default_symbols();
 };

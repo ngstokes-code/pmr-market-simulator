@@ -53,11 +53,21 @@ MDB_dbi LMDBStorage::dbi_for_symbol(const std::string& sym) {
 void LMDBStorage::commit_txn() {
   if (!txn_) return;
   int rc = mdb_txn_commit(txn_);
-  if (rc) {
+  if (rc != MDB_SUCCESS) {
     std::cerr << "LMDB commit failed: " << mdb_strerror(rc) << "\n";
+    mdb_txn_abort(txn_);  // ensure clean state
   }
-  mdb_txn_begin(env_, nullptr, 0, &txn_);  // restart txn
+
+  txn_ = nullptr;
   batch_count_ = 0;
+
+  // Immediately start a fresh write txn for continuity
+  rc = mdb_txn_begin(env_, nullptr, 0, &txn_);  // restart txn
+  if (rc != MDB_SUCCESS) {
+    std::cerr << "[LMDBStorage] txn restart failed: " << mdb_strerror(rc)
+              << "\n";
+    txn_ = nullptr;  // mark unusable
+  }
 }
 
 void LMDBStorage::write(const Event& e) {
@@ -87,7 +97,9 @@ void LMDBStorage::write(const Event& e) {
   }
 }
 
-void LMDBStorage::flush() { commit_txn(); }
+void LMDBStorage::flush() {
+  if (txn_ && batch_count_ > 0) commit_txn();
+}
 
 std::unique_ptr<IStorage> make_lmdb_storage(const std::string& path) {
   return std::make_unique<LMDBStorage>(path);
