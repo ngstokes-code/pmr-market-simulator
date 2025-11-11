@@ -2,9 +2,13 @@
 #include "msim/simulator.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <iostream>
 #include <mutex>
+#include <thread>
+
+#include "msim/rng.hpp"
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -121,29 +125,16 @@ uint64_t Simulator::now_ns() const {
       .count();
 }
 
-double Simulator::draw_price(const std::string& s, uint64_t i_event) {
-  auto& st = syms_.at(s);
-  double mid = st.mid;
+double Simulator::draw_price(double mid, uint64_t i_event, ThreadContext& ctx) {
   double sigma = cfg_.sigma;
-  if (cfg_.drift_ampl > 0.0 && cfg_.drift_period > 0) {
-    double phase =
-        (double)(i_event % cfg_.drift_period) / (double)cfg_.drift_period;
-    sigma *= (1.0 + cfg_.drift_ampl * std::sin(phase * 2.0 * M_PI));
-  }
-  std::normal_distribution<double> dist(mid, mid * sigma);
-  return dist(rng_);
-}
 
-double Simulator::draw_price(double mid, uint64_t i_event,
-                             std::mt19937_64& rng) {
-  double sigma = cfg_.sigma;
   if (cfg_.drift_ampl > 0.0 && cfg_.drift_period > 0) {
     double phase =
-        (double)(i_event % cfg_.drift_period) / (double)cfg_.drift_period;
+        double(i_event % cfg_.drift_period) / double(cfg_.drift_period);
     sigma *= (1.0 + cfg_.drift_ampl * std::sin(phase * 2.0 * M_PI));
   }
-  std::normal_distribution<double> dist(mid, mid * sigma);
-  return dist(rng);
+
+  return ctx.normal(ctx.rng, mid, mid * sigma);
 }
 
 void Simulator::emit_event(const Event& e) { storage_->write(e); }
@@ -153,21 +144,24 @@ void Simulator::run() {
   auto t0 = clock::now();
   uint64_t adds = 0, cancels = 0, trades = 0;
 
+  ThreadContext ctx;
+  ctx.rng = Xoroshiro128Plus(cfg_.seed);
+  ctx.normal = NormalBM{};
+
   std::vector<std::string> names;
   names.reserve(syms_.size());
   for (auto& kv : syms_) names.push_back(kv.first);
-  std::uniform_int_distribution<size_t> sym_pick(0, names.size() - 1);
 
   for (uint64_t i = 0; i < cfg_.total_events; ++i) {
-    auto& s = names[sym_pick(rng_)];
+    auto& s = names[rand_index(ctx.rng, names.size())];
     auto& st = syms_.at(s);
     auto& book = *st.book;
 
-    bool is_add = add_dist_(rng_);
+    bool is_add = rand_bool(ctx.rng, 0.5);  // 50/50 add vs cancel
     if (is_add || next_order_id_ <= 10) {
-      char side = side_dist_(rng_) ? 'B' : 'S';
-      double p = draw_price(s, i);
-      int qty = qty_dist_(rng_);
+      char side = rand_bool(ctx.rng, 0.5) ? 'B' : 'S';
+      double p = draw_price(st.mid, i, ctx);
+      int qty = rand_int(ctx.rng, 1, 100);
       uint64_t id = next_order_id_++;
       Order o{id, p, qty, side, now_ns()};
 
@@ -180,6 +174,7 @@ void Simulator::run() {
       e.price = o.price;
       e.qty = o.qty;
       e.side = o.side;
+
       if (matched > 0) {
         e.type = EventType::TRADE;
         e.price = trade_px;
@@ -210,6 +205,7 @@ void Simulator::run() {
       }
     }
   }
+
   storage_->flush();
   auto t1 = clock::now();
   auto us =
@@ -237,179 +233,166 @@ void Simulator::run() {
 }  // Simulator::run
 
 void Simulator::run_mt() {
-  std::ios::sync_with_stdio(false);
-  std::cout.setf(std::ios::unitbuf);
-
   using clock = std::chrono::high_resolution_clock;
   auto t0 = clock::now();
 
-  int T = std::min<int>(cfg_.num_threads, std::thread::hardware_concurrency());
-  std::vector<std::thread> threads;
-  std::vector<ThreadContext> ctxs(T);
+  const size_t n_symbols = syms_.size();
+  size_t n_threads =
+      (cfg_.num_threads > 0)
+          ? cfg_.num_threads
+          : std::min(syms_.size(),
+                     static_cast<size_t>(std::thread::hardware_concurrency()));
+  // Clamp: never spawn more threads than symbols, and at least 1.
+  n_threads = std::max<size_t>(1, std::min(n_threads, n_symbols));
 
-  // Partition symbols among threads
-  size_t i = 0;
-  for (auto& kv : syms_) {
-    ctxs[i % T].symbols.push_back(kv.first);
-    i++;
+  const size_t per_thread = (n_symbols + n_threads - 1) / n_threads;
+
+  std::vector<std::thread> workers;
+  std::vector<ThreadContext> contexts(n_threads);
+
+  // Partition symbols across threads
+  std::vector<std::string> all_syms;
+  for (auto& kv : syms_) all_syms.push_back(kv.first);
+
+  size_t idx = 0;
+  for (size_t t = 0; t < n_threads; ++t) {
+    auto& ctx = contexts[t];
+    size_t start = idx;
+    size_t end = std::min(start + per_thread, n_symbols);
+    for (size_t i = start; i < end; ++i) ctx.symbols.push_back(all_syms[i]);
+    idx = end;
+
+    ctx.rng = Xoroshiro128Plus(cfg_.seed + t);  // new fast rng
+    ctx.normal = NormalBM{};
+    ctx.arena = std::make_unique<ArenaBundle>(cfg_.arena_bytes);
+
+    // Build order books for each symbol in this thread
+    for (auto& s : ctx.symbols) {
+      auto book = std::make_unique<OrderBook>(s, &ctx.arena->arena);
+      ctx.books.emplace(s, std::move(book));
+      ctx.mid[s] = 100.0;
+    }
   }
 
-  // Launch workers
-  safe_log("[Partitioning]");
-  for (int tid = 0; tid < T; ++tid) {
-    threads.emplace_back([&, tid]() {
-      try {
-        bind_to_core(tid % std::thread::hardware_concurrency());
-        auto& ctx = ctxs[tid];
-        ctx.rng.seed(cfg_.seed + tid);
+  std::atomic<uint64_t> global_order_id{1};
 
-        if (ctx.symbols.empty()) {
-          safe_log("[Thread ", tid, "] no symbols, exiting.\n");
-          return;
-        }
+  // Launch worker threads
+  for (size_t t = 0; t < n_threads; ++t) {
+    workers.emplace_back([this, &contexts, t, &global_order_id, n_threads]() {
+      auto& ctx = contexts[t];
 
-        // Local per-thread OrderBooks and arenas
-        ctx.arena = std::make_unique<ArenaBundle>(cfg_.arena_bytes);
-        for (auto& sym : ctx.symbols) {
-          ctx.books[sym] = std::make_unique<OrderBook>(sym, &ctx.arena->arena);
-          ctx.mid[sym] = 100.0;  // initialize per-symbol midprice
-          ctx.live[sym] = {};
-          ctx.live[sym].reserve(1 << 16);
-        }
+      // If this thread got no symbols (can happen with odd counts), just exit.
+      if (ctx.symbols.empty()) return;
 
-        std::uniform_int_distribution<size_t> sym_pick(0,
-                                                       ctx.symbols.size() - 1);
-        std::bernoulli_distribution add_dist(0.9);
-        std::bernoulli_distribution side_dist(0.5);
-        std::uniform_int_distribution<int> qty_dist(1, 100);
+      this->bind_to_core(t);  // our NUMA/core pinning helper
 
-        auto start = clock::now();
-        uint64_t local_events = 0;
+      auto t0_thread = clock::now();
 
-        for (uint64_t ev = tid; ev < cfg_.total_events; ev += T) {
-          if (ctx.symbols.empty()) {
-            safe_err("[Thread ", tid, "] no symbols assigned — exiting early");
-            return;
-          }
-          const auto& s = ctx.symbols[sym_pick(ctx.rng)];
-          auto& book = *ctx.books[s];
-          bool is_add = add_dist(ctx.rng);
+      // Even split + remainder to the last worker to cover all events.
+      uint64_t base = cfg_.total_events / n_threads;
+      uint64_t rem = cfg_.total_events % n_threads;
+      uint64_t per_thread_events = base + (t == n_threads - 1 ? rem : 0);
 
-          if (is_add) {
-            char side = side_dist(ctx.rng) ? 'B' : 'S';
-            double p = draw_price(ctx.mid[s], ev, ctx.rng);
-            int qty = qty_dist(ctx.rng);
-            uint64_t id = ev + 1;
-            Order o{id, p, qty, side, now_ns()};
-            double trade_px = 0.0;
-            int matched = book.add_order(o, trade_px);
-            ctx.live[s].push_back(id);
+      for (uint64_t i = 0; i < per_thread_events; ++i) {
+        auto& sym = ctx.symbols[rand_index(ctx.rng, ctx.symbols.size())];
+        auto& book = *ctx.books.at(sym);
 
-            auto bb = book.best_bid();
-            auto ba = book.best_ask();
-            if (bb && ba)
-              ctx.mid[s] = (*bb + *ba) * 0.5;
-            else if (bb)
-              ctx.mid[s] = *bb;
-            else if (ba)
-              ctx.mid[s] = *ba;
+        bool is_add = rand_bool(ctx.rng);
+        if (is_add || global_order_id.load(std::memory_order_relaxed) <= 10) {
+          char side = rand_bool(ctx.rng) ? 'B' : 'S';
+          double p = draw_price(ctx.mid[sym], i, ctx);
+          int qty = rand_int(ctx.rng, 1, 100);
+          uint64_t id = global_order_id.fetch_add(1, std::memory_order_relaxed);
+          Order o{id, p, qty, side, now_ns()};
 
-            Event e{o.ts_ns,
-                    matched > 0 ? EventType::TRADE : EventType::ORDER_ADD,
-                    s,
-                    matched > 0 ? trade_px : o.price,
-                    matched > 0 ? matched : o.qty,
-                    side};
+          double trade_px = 0.0;
+          int matched = book.add_order(o, trade_px);
+
+          Event e;
+          e.ts_ns = o.ts_ns;
+          e.symbol = sym;
+          e.price = o.price;
+          e.qty = o.qty;
+          e.side = o.side;
+
+          if (matched > 0) {
+            e.type = EventType::TRADE;
+            e.price = trade_px;
+            e.qty = matched;
             emit_event(e);
-            matched > 0 ? ++ctx.trades : ++ctx.adds;
+            ++ctx.trades;
           } else {
-            auto& pool = ctx.live[s];
-            if (!pool.empty()) {
-              size_t k = std::uniform_int_distribution<size_t>(
-                  0, pool.size() - 1)(ctx.rng);
-              uint64_t victim = pool[k];
-              pool[k] = pool.back();
-              pool.pop_back();
-              if (pool.capacity() > 65536 && pool.size() < 32768) {
-                pool.shrink_to_fit();  // keep `live[s]` capacity stable, reduce
-                                       // unnecessary heap growth
-              }
-
-              bool ok = book.cancel_order(victim);
-              if (ok) {
-                Event e{now_ns(), EventType::ORDER_CANCEL, s, 0.0, 0, 'B'};
-                emit_event(e);
-                ++ctx.cancels;
-              }
-            }
+            e.type = EventType::ORDER_ADD;
+            emit_event(e);
+            ++ctx.adds;
           }
-          ++local_events;
+
+          auto bb = book.best_bid();
+          auto ba = book.best_ask();
+          if (bb && ba)
+            ctx.mid[sym] = (*bb + *ba) * 0.5;
+          else if (bb)
+            ctx.mid[sym] = *bb;
+          else if (ba)
+            ctx.mid[sym] = *ba;
+        } else {
+          uint64_t cur = global_order_id.load(std::memory_order_relaxed);
+          uint64_t victim = (cur > 1) ? (cur - 1) : 1;
+          bool ok = book.cancel_order(victim);
+          if (ok) {
+            Event e{now_ns(), EventType::ORDER_CANCEL, sym, 0.0, 0, 'B'};
+            emit_event(e);
+            ++ctx.cancels;
+          }
         }
-
-        auto end = clock::now();
-        ctx.elapsed_ms =
-            std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-                .count() /
-            1000.0;
-        ctx.total_events = local_events;
-
-        safe_log("[Thread ", tid, "] done. Events=", ctx.total_events,
-                 " Time=", ctx.elapsed_ms, " ms\n");
-      } catch (const std::exception& ex) {
-        safe_err("[Thread ", tid, "] ERROR: ", ex.what(), "\n");
-      } catch (...) {
-        safe_err("[Thread ", tid, "] ERROR: unknown exception\n");
       }
+
+      auto t1_thread = clock::now();
+      ctx.elapsed_ms =
+          std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(
+              t1_thread - t0_thread)
+              .count();
     });
   }
 
-  std::cout << "[Main] Waiting for " << threads.size()
-            << " threads to finish...\n";
-  for (auto& t : threads) {
-    std::cerr << "[Main] Joining thread...\n";
-    t.join();
-  }
-  std::cerr << "[Main] All threads joined.\n";
-  storage_->flush();
-  std::cout << "[Main] All threads joined. Aggregating metrics...\n";
+  // Join all threads
+  for (auto& th : workers) th.join();
 
-  // ─────────────── Aggregate Metrics ───────────────
-  uint64_t adds = 0, cancels = 0, trades = 0, total_events = 0;
-  double total_ms = 0.0;
-
-  std::cout << "\nPer-Thread Summary\n";
-  std::cout << "-------------------------------\n";
-  for (int tid = 0; tid < T; ++tid) {
-    auto& c = ctxs[tid];
-    double evps =
-        (c.elapsed_ms > 0.0) ? (c.total_events / c.elapsed_ms) * 1000.0 : 0.0;
+  // Aggregate stats
+  uint64_t adds = 0, cancels = 0, trades = 0;
+  double max_ms = 0.0;
+  for (auto& c : contexts) {
     adds += c.adds;
     cancels += c.cancels;
     trades += c.trades;
-    total_events += c.total_events;
-    total_ms = std::max(total_ms, c.elapsed_ms);
-
-    std::cout << "[Thread " << tid << "] "
-              << "Symbols=" << c.symbols.size() << "  Adds=" << c.adds
-              << "  Cancels=" << c.cancels << "  Trades=" << c.trades
-              << "  Events=" << c.total_events << "  Time=" << c.elapsed_ms
-              << " ms"
-              << "  -> " << static_cast<uint64_t>(evps) << " ev/s\n";
+    max_ms = std::max(max_ms, c.elapsed_ms);
   }
 
-  double global_evps =
-      (total_ms > 0.0) ? (total_events / total_ms) * 1000.0 : 0.0;
+  auto t1 = clock::now();
+  double elapsed_ms =
+      std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t1 -
+                                                                            t0)
+          .count();
+  double evps = (cfg_.total_events * 1000.0) / elapsed_ms;
 
-  std::cout << "-------------------------------\n";
-  std::cout << "Threads:       " << T << "\n"
-            << "Total events:  " << total_events << "\n"
+  std::cout << "\nPer-Thread Summary\n-------------------------------\n";
+  for (size_t t = 0; t < n_threads; ++t) {
+    const auto& c = contexts[t];
+    double evps_t = (cfg_.total_events / n_threads) / (c.elapsed_ms / 1000.0);
+    std::cout << "[Thread " << t << "] Symbols=" << c.symbols.size()
+              << " Adds=" << c.adds << " Cancels=" << c.cancels
+              << " Trades=" << c.trades << " Time=" << c.elapsed_ms << " ms -> "
+              << static_cast<uint64_t>(evps_t) << " ev/s\n";
+  }
+  std::cout << "-------------------------------\n"
+            << "Threads:       " << n_threads << "\n"
+            << "Total events:  " << cfg_.total_events << "\n"
             << "Adds:          " << adds << "\n"
             << "Cancels:       " << cancels << "\n"
             << "Trades:        " << trades << "\n"
-            << "Elapsed (max): " << total_ms << " ms\n"
-            << "Throughput:    " << static_cast<uint64_t>(global_evps)
-            << " ev/s\n";
-  std::cout << "-------------------------------\n";
+            << "Elapsed (max): " << max_ms << " ms\n"
+            << "Throughput:    " << static_cast<uint64_t>(evps) << " ev/s\n"
+            << "-------------------------------\n";
 }  // Simulator::run_mt (multi-threaded)
 
 }  // namespace msim

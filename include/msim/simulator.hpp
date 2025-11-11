@@ -5,8 +5,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "box_muller.hpp"
 #include "order_book.hpp"
 #include "pmr_utils.hpp"
+#include "rng.hpp"
 #include "storage.hpp"
 
 namespace msim {
@@ -61,10 +63,12 @@ class Simulator {
     std::unordered_map<std::string, std::unique_ptr<OrderBook>> books;
     std::unordered_map<std::string, double> mid;  // local midprice per symbol
     std::unordered_map<std::string, std::vector<uint64_t>>
-        live;  // live order ids
+        live;  // live order ids, for realistic cancellation logic
 
-    std::mt19937_64
-        rng;  // local RNG avoids cache contention on a shared generator
+    // local RNG avoids cache contention on a shared generator
+    Xoroshiro128Plus rng;
+    NormalBM normal;  // box-muller transform... uniform dist -> normal dist
+
     uint64_t adds = 0;
     uint64_t cancels = 0;
     uint64_t trades = 0;
@@ -80,9 +84,7 @@ class Simulator {
   uint64_t next_order_id_ = 1;
 
   uint64_t now_ns() const;
-  double draw_price(const std::string& s, uint64_t i_event);  // single-thread
-  double draw_price(double mid, uint64_t i_event,
-                    std::mt19937_64& rng);  // multi-thread
+  double draw_price(double mid, uint64_t i_event, ThreadContext& ctx);
   void emit_event(const Event& e);
   static std::vector<std::string> default_symbols();
 };
