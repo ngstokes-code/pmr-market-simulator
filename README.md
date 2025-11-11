@@ -62,21 +62,6 @@ Compiled with Clang 17 / MSVC 19.44 using `-O3` + LTO (Release)
 
 > ⚙️ *Each core processes ~4.5–4.7 million events/sec (≈165 ns per event), with linear scaling up to 6 threads and full NUMA locality.*
 
----
-
-### Single-Threaded (Legacy Baseline)
-
-| Build   | Symbols | Events | Time (ms) | Throughput (ev/s) | Notes        |
-| ------- | ------- | ------ | --------- | ----------------- | ------------ |
-| Debug   | 3       | 100 k  | 187       | 0.53 M            | Baseline     |
-| Release | 3       | 100 k  | ~35       | 2.8 M             | `-O3`, LTO   |
-| Release | 6       | 200 k  | ~70       | 2.9 M             | Linear scale |
-
-*(Ryzen 7 5800X, Windows 11, MSVC 19.44)*
-
----
-
-
 ## 🧪 Example Simulation
 
 ```text
