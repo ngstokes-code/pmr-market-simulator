@@ -1,5 +1,7 @@
 #include "msim/order_book.hpp"
 
+#include "msim/event.hpp"
+
 namespace msim {
 
 OrderBook::OrderBook(std::string symbol, std::pmr::memory_resource* mr)
@@ -11,7 +13,7 @@ OrderBook::OrderBook(std::string symbol, std::pmr::memory_resource* mr)
 
 int OrderBook::add_order(const Order& o, double& trade_price) {
   int remaining = o.qty;
-  if (o.side == 'B') {
+  if (o.side == Side::BUY) {
     while (remaining > 0 && !asks_.empty()) {
       auto it = asks_.begin();
       if (o.price < it->first) break;
@@ -31,7 +33,7 @@ int OrderBook::add_order(const Order& o, double& trade_price) {
       Order rest = o;
       rest.qty = remaining;
       bids_[o.price].push_back(rest);
-      index_.emplace(o.id, std::make_pair('B', o.price));
+      index_.emplace(o.id, std::make_pair(Side::BUY, o.price));
     }
   } else {
     while (remaining > 0 && !bids_.empty()) {
@@ -53,7 +55,7 @@ int OrderBook::add_order(const Order& o, double& trade_price) {
       Order rest = o;
       rest.qty = remaining;
       asks_[o.price].push_back(rest);
-      index_.emplace(o.id, std::make_pair('S', o.price));
+      index_.emplace(o.id, std::make_pair(Side::SELL, o.price));
     }
   }
   return o.qty - remaining;
@@ -62,10 +64,10 @@ int OrderBook::add_order(const Order& o, double& trade_price) {
 bool OrderBook::cancel_order(uint64_t order_id) {
   auto it = index_.find(order_id);
   if (it == index_.end()) return false;
-  char side = it->second.first;
+  Side side = it->second.first;
   double price = it->second.second;
   bool removed = false;
-  if (side == 'B') {
+  if (side == Side::BUY) {
     auto lvl = bids_.find(price);
     if (lvl != bids_.end()) {
       auto& q = lvl->second;

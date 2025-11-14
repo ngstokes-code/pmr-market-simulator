@@ -137,7 +137,10 @@ double Simulator::draw_price(double mid, uint64_t i_event, ThreadContext& ctx) {
   return ctx.normal(ctx.rng, mid, mid * sigma);
 }
 
-void Simulator::emit_event(const Event& e) { storage_->write(e); }
+void Simulator::emit_event(const Event& e) {
+  storage_->write(e);
+  if (grpc_sink_) grpc_sink_->write_event(e);
+}
 
 void Simulator::run() {
   using clock = std::chrono::high_resolution_clock;
@@ -159,7 +162,7 @@ void Simulator::run() {
 
     bool is_add = rand_bool(ctx.rng, 0.5);  // 50/50 add vs cancel
     if (is_add || next_order_id_ <= 10) {
-      char side = rand_bool(ctx.rng, 0.5) ? 'B' : 'S';
+      Side side = rand_bool(ctx.rng, 0.5) ? Side::BUY : Side::SELL;
       double p = draw_price(st.mid, i, ctx);
       int qty = rand_int(ctx.rng, 1, 100);
       uint64_t id = next_order_id_++;
@@ -199,7 +202,7 @@ void Simulator::run() {
       uint64_t victim = (next_order_id_ > 1) ? (next_order_id_ - 1) : 1;
       bool ok = book.cancel_order(victim);
       if (ok) {
-        Event e{now_ns(), EventType::ORDER_CANCEL, s, 0.0, 0, 'B'};
+        Event e{now_ns(), EventType::ORDER_CANCEL, s, 0.0, 0, Side::BUY};
         emit_event(e);
         ++cancels;
       }
@@ -299,7 +302,7 @@ void Simulator::run_mt() {
 
         bool is_add = rand_bool(ctx.rng);
         if (is_add || global_order_id.load(std::memory_order_relaxed) <= 10) {
-          char side = rand_bool(ctx.rng) ? 'B' : 'S';
+          Side side = rand_bool(ctx.rng) ? Side::BUY : Side::SELL;
           double p = draw_price(ctx.mid[sym], i, ctx);
           int qty = rand_int(ctx.rng, 1, 100);
           uint64_t id = global_order_id.fetch_add(1, std::memory_order_relaxed);
@@ -340,7 +343,7 @@ void Simulator::run_mt() {
           uint64_t victim = (cur > 1) ? (cur - 1) : 1;
           bool ok = book.cancel_order(victim);
           if (ok) {
-            Event e{now_ns(), EventType::ORDER_CANCEL, sym, 0.0, 0, 'B'};
+            Event e{now_ns(), EventType::ORDER_CANCEL, sym, 0.0, 0, Side::BUY};
             emit_event(e);
             ++ctx.cancels;
           }

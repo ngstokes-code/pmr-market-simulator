@@ -37,11 +37,84 @@ if(ipo_supported)
 endif()
 
 # ──────────────────────────────────────────────
-# Build the market_sim executable
+# gRPC + Protobuf Integration (vcpkg CONFIG mode)
 # ──────────────────────────────────────────────
-add_executable(market_sim src/main.cpp)
-target_link_libraries(market_sim PRIVATE marketsim)
+option(MSIM_WITH_GRPC "Enable gRPC integration" ON)
+if(MSIM_WITH_GRPC)
+  # Use CONFIG mode
+  find_package(Protobuf CONFIG REQUIRED)
+  find_package(gRPC CONFIG REQUIRED)
 
+  message(STATUS "Found Protobuf via CONFIG")
+  message(STATUS "Found gRPC via CONFIG")
+
+  set(PROTO_FILE "${CMAKE_SOURCE_DIR}/proto/market.proto")
+  set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/grpc_gen")
+  file(MAKE_DIRECTORY ${GENERATED_DIR})
+
+  target_link_libraries(marketsim PUBLIC
+      gRPC::grpc++
+      protobuf::libprotobuf
+  )
+  target_include_directories(marketsim PUBLIC
+    ${GENERATED_DIR}
+  )
+
+  # Generate standard protobuf C++ files
+  protobuf_generate_cpp(
+      PROTO_SRCS
+      PROTO_HDRS
+      ${PROTO_FILE}
+      PROTOC_OUT_DIR ${GENERATED_DIR}
+  )
+
+  # gRPC plugin provided by vcpkg
+  set(GRPC_CPP_PLUGIN
+      "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/grpc/grpc_cpp_plugin${CMAKE_EXECUTABLE_SUFFIX}"
+  )
+
+  # Generate gRPC bindings manually
+  add_custom_command(
+      OUTPUT ${GENERATED_DIR}/market.grpc.pb.cc ${GENERATED_DIR}/market.grpc.pb.h
+      COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+          --grpc_out=${GENERATED_DIR}
+          --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
+          --proto_path=${CMAKE_SOURCE_DIR}/proto
+          ${PROTO_FILE}
+      DEPENDS ${PROTO_FILE}
+      COMMENT "Generating gRPC service C++ code"
+  )
+
+  set(GRPC_SRCS "${GENERATED_DIR}/market.grpc.pb.cc")
+  set(GRPC_HDRS "${GENERATED_DIR}/market.grpc.pb.h")
+
+  add_executable(market_sim
+      src/main.cpp
+      ${PROTO_SRCS} ${PROTO_HDRS}
+      ${GRPC_SRCS} ${GRPC_HDRS}
+  )
+  target_link_libraries(market_sim PRIVATE
+      marketsim
+      gRPC::grpc++
+      protobuf::libprotobuf
+  )
+
+  add_executable(collector_server
+    src/collector_server.cpp
+    ${PROTO_SRCS} ${PROTO_HDRS}
+    ${GRPC_SRCS} ${GRPC_HDRS}
+  )
+  target_include_directories(collector_server PRIVATE
+    ${GENERATED_DIR}
+  )
+  target_link_libraries(collector_server PRIVATE
+      gRPC::grpc++
+      protobuf::libprotobuf
+  )
+
+endif()
+
+# 5. Optional optimization flags
 if(ipo_supported)
   set_property(TARGET market_sim PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()

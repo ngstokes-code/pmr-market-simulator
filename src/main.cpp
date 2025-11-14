@@ -55,7 +55,9 @@ int main(int argc, char** argv) {
     else if (a == "--no-log") {
       no_log = true;
       cfg.log_path.clear();
-    } else if (a == "--help") {
+    } else if (a == "--grpc" && i + 1 < argc)
+      cfg.grpc_target = argv[++i];
+    else if (a == "--help") {
       std::cout
           << "Usage: ./market_sim [options]\n"
           << "  --events N           Total events (default 100000)\n"
@@ -111,7 +113,21 @@ int main(int argc, char** argv) {
     }
     std::cout.setf(std::ios::unitbuf);
     Simulator sim(cfg);
+    std::unique_ptr<msim::GrpcStorage> grpc_sink;
+    if (!cfg.grpc_target.empty()) {
+      grpc_sink = std::make_unique<msim::GrpcStorage>(cfg.grpc_target);
+      if (!grpc_sink->open()) {
+        std::cerr << "Failed to open gRPC stream to " << cfg.grpc_target
+                  << "\n";
+        return 1;
+      }
+      sim.set_grpc_sink(grpc_sink.get());  // new function we add
+    }
     (cfg.num_threads > 1) ? sim.run_mt() : sim.run();
+    if (grpc_sink) {
+      grpc_sink->close();
+      std::cout << "Collector ACK count: " << grpc_sink->ack_count() << "\n";
+    }
   } catch (const std::exception& ex) {
     std::cerr << "Error: " << ex.what() << "\n";
     return 1;

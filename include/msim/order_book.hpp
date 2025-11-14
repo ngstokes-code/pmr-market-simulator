@@ -3,6 +3,7 @@
 #include <deque>
 #include <map>
 #include <memory_resource>
+#include <msim/event.hpp>
 #include <optional>
 #include <string>
 
@@ -12,7 +13,7 @@ struct Order {
   uint64_t id;
   double price;
   int qty;
-  char side;  // 'B' or 'S'
+  Side side;  // BUY or SELL
   uint64_t ts_ns;
 };
 
@@ -31,7 +32,7 @@ class OrderBook {
   using Queue = std::pmr::deque<Order>;
   using BidMap = std::pmr::map<double, Queue, std::greater<double>>;
   using AskMap = std::pmr::map<double, Queue, std::less<double>>;
-  using IndexMap = std::pmr::map<uint64_t, std::pair<char, double>>;
+  using IndexMap = std::pmr::map<uint64_t, std::pair<Side, double>>;
 
   BidMap bids_;
   AskMap asks_;
