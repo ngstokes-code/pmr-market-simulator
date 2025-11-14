@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "box_muller.hpp"
+#include "grpc_storage.hpp"
 #include "order_book.hpp"
 #include "pmr_utils.hpp"
 #include "rng.hpp"
@@ -23,8 +24,9 @@ struct SimConfig {
   uint64_t drift_period = 10000;
   std::string log_path;
   bool print_arena = false;
-  int dump_n = 0;       // number of events to print when reading
-  int num_threads = 1;  // default single-thread
+  int dump_n = 0;           // number of events to print when reading
+  int num_threads = 1;      // default single-thread
+  std::string grpc_target;  // "" = disabled
 };
 
 class Simulator {
@@ -32,8 +34,10 @@ class Simulator {
   explicit Simulator(SimConfig cfg);
   void run();
   void run_mt();  // multithreaded / NUMA-aware version
+  void set_grpc_sink(GrpcStorage* sink) { grpc_sink_ = sink; }
 
  private:
+  GrpcStorage* grpc_sink_ = nullptr;
   static void bind_to_core(
       size_t cord_id);  // Pins the calling thread to `core_id` to ensure
                         // NUMA-local allocations.
@@ -67,7 +71,8 @@ class Simulator {
 
     // local RNG avoids cache contention on a shared generator
     Xoroshiro128Plus rng;
-    NormalBM normal;  // box-muller transform... uniform dist -> normal dist
+    NormalBM
+        normal;  // box-muller transform... uniform dist (0,1) -> normal dist
 
     uint64_t adds = 0;
     uint64_t cancels = 0;

@@ -4,23 +4,55 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey.svg)
 ![Performance](https://img.shields.io/badge/Throughput-25.7M%20ev%2Fs%20%E2%80%94%20NUMA%20Optimized-brightgreen.svg)
 ![Persistence](https://img.shields.io/badge/Storage-LMDB-critical.svg)
+![gRPC](https://img.shields.io/badge/Streaming-gRPC%20Realtime-blueviolet.svg)
 ![Build](https://img.shields.io/badge/Build-CMake-darkblue.svg)
 ![Memory](https://img.shields.io/badge/Arena-std%3A%3Apmr%20Monotonic-success.svg)
 ![Allocator](https://img.shields.io/badge/Allocator-aware-9cf.svg)
 
-A **low-latency, allocator-aware, event-driven market simulator** demonstrating
-modern **C++17 polymorphic memory resources** (`std::pmr`), custom allocator design,
-NUMA-aware memory locality, and high-throughput event processing.
+A **high-performance, allocator-aware market simulator** with NUMA-optimized
+order-book engines, zero-allocation event loops, LMDB persistence, and
+**real-time gRPC streaming** for downstream analytics or distributed pipelines.
 
-It models multiple independent order books with Gaussian-sampled order prices and
-optional sinusoidal drift – sustaining **7.6 million events/sec single-threaded**
-and **25.7 million events/sec multi-threaded (6 cores)** using
-NUMA-pinned arenas and the `xoshiro128+` RNG with Box-Muller transform.
+It models multiple independent limit order books with Gaussian-sampled prices
+and optional sinusoidal drift—sustaining **7.6 million events/sec single-threaded**
+and **25.7 million events/sec** multi-threaded on a modern 6-core CPU.
 
 > ⚙️ 25.7 million events/sec (6 threads, NUMA-pinned) · 7.67 million events/sec (single core) · ~130 ns per event
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Core Features](#core-features)
+- [Real-Time gRPC Streaming](#real-time-grpc-streaming)
+  - [Components](#components)
+  - [Features](#features)
+- [Simulator vs gRPC Throughput Explained](#simulator-vs-grpc-throughput-explained)
+- [Benchmarks](#benchmarks)
+  - [Example Simulation](#example-simulation)
+- [Replay Mode (LMDB Round-Trip)](#replay-mode-lmdb-round-trip)
+- [Detailed Single-Thread Benchmarks](#detailed-single-thread-benchmarks)
+- [Build & Run](#build--run)
+  - [Example Run](#example-run)
+  - [Streaming to a Collector](#streaming-to-a-collector)
+- [CLI Flags](#cli-flags)
+- [Design Principles](#design-principles)
+- [References](#references)
+
+
 ---
 
+## 🚀 Quick Start
+
+```bash
+git clone https://github.com/ngstokes-code/pmr-market-simulator
+cd pmr-market-simulator
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --config Release -j
+```
+
+---
+<a id="overview"></a>
 ## ⚡ Overview
 
 |Component|Purpose|
@@ -29,10 +61,12 @@ NUMA-pinned arenas and the `xoshiro128+` RNG with Box-Muller transform.
 |**`Simulator`**|Multi-threaded event engine generating add / cancel / trade flows with Gaussian price sampling with optional drifting midprice.|
 |**`LMDBStorage`**|Durable, per-symbol append-only event log using Lightning Memory-Mapped Database (LMDB).|
 |**`LMDBReader`**|Offline reader for verifying and replaying persisted LMDB event streams.|
+| **`GrpcStorage`**     | High-throughput client-side event streamer with protobuf batching and gRPC backpressure handling. |
+| **`collector_server`**| Reference real-time receiver measuring delivered events/sec and writing ACK counts. |
 |**`pmr_utils`**|Custom counting upstream allocator for precise arena telemetry.|
 
 ---
-
+<a id="core-features"></a>
 ## 🔩 Core Features
 
 - Per-symbol **monotonic arenas** (`std::pmr::monotonic_buffer_resource`)
@@ -46,7 +80,52 @@ NUMA-pinned arenas and the `xoshiro128+` RNG with Box-Muller transform.
 - Fully parameterized via CLI flags
 
 ---
+<a id="real-time-grpc-streaming"></a>
+## 📡 Real-Time gRPC Streaming
 
+The simulator can export live order-book events over a **high-throughput gRPC streaming interface** suitable for real-time analytics, research, and distributed pipelines.
+
+```text
+┌──────────┐      ┌────────────┐     ┌──────────────┐
+│ Simulator ├───▶│ GrpcStorage ├───▶│ gRPC Stream  │──▶ CollectorServer
+└──────────┘      └────────────┘     └──────────────┘
+```
+<a id="components"></a>
+### Components
+| Component              | Description                                          |
+| ---------------------- | ---------------------------------------------------- |
+| `GrpcStorage`          | Client-side batching serializer + streaming writer   |
+| `MarketStream.Publish` | Bidirectional protobuf-defined RPC                   |
+| `collector_server`     | High-throughput receiver measuring delivered msg/sec |
+
+<a id="features"></a>
+### Features
+
+- **Batching** of events (default: 512) for network efficiency
+- **Protobuf arena allocation** for zero-copy serialization
+- **Cross-process real-time delivery**
+- **~2.0–3.5M protobuf messages/sec** delivered on Windows/MSVC (baseline)
+
+---
+<a id="simulator-vs-grpc-throughput-explained"></a>
+## 📊 Simulator vs gRPC Throughput Explained
+
+The simulator internally executes simulation iterations, each of which may or may not produce an order-book event.
+Only actual generated events (ADD / CANCEL / TRADE) are sent to the gRPC stream.
+
+Example for 500,000 iterations:
+| Type                       | Count       |
+| -------------------------- | ----------- |
+| Simulation iterations      | 500,000     |
+| ORDER_ADD                  | 146,038     |
+| ORDER_CANCEL               | 40,106      |
+| TRADE                      | 104,000     |
+| **Exported events (gRPC)** | **290,144** |
+
+The collector returns an ACK containing the number of received protobuf messages, which equals the exported-event count.
+
+---
+<a id="benchmarks"></a>
 ## 📊 Benchmarks
 
 ### Multi-Threaded (NUMA-Pinned Arenas)
@@ -55,16 +134,17 @@ Compiled with Clang 17 / MSVC 19.44 using `-O3` + LTO (Release)
 
 | Config | Threads | Logging | Events/sec | Notes |
 |---------|----------|----------|-------------|-------|
-| 6 symbols (NUMApinned) | 6 | No | **25.7 M** | xoshiro128+ RNG + Box-Muller, NUMA-pinned threads |
+| 6 symbols (NUMA-pinned) | 6 | No | **25.7 M** | xoshiro128+ RNG + Box-Muller, NUMA-pinned threads |
 | 6 symbols (single-thread baseline) | 1 | No | **7.6 M** | Single-core baseline |
-| 6 symbols (NUMApinned) | 6 | Yes | **2.56 M** | Shared binary logging (I/O-bound) |
+| 6 symbols (NUMA-pinned) | 6 | Yes | **2.56 M** | Shared binary logging (I/O-bound) |
 | 6 symbols (single-thread baseline) | 1 | Yes | **3.59 M** | Single writer, I/O-bound |
 
-> ⚙️ *Each core processes ~4.5–4.7 million events/sec (≈165 ns per event), with linear scaling up to 6 threads and full NUMA locality.*
+> ⚙️ *Each core processes ~7–7.6 million events/sec (≈130 ns per event), with linear scaling up to 6 threads and full NUMA locality.*
 
+<a id="example-simulation"></a>
 ## 🧪 Example Simulation
 
-```text
+```yaml
 MarketSim (PMR) Report
 ---------------------------
 Symbols:           3
@@ -79,7 +159,7 @@ Throughput:        7669299 ev/s
 ⚙️ *On a Ryzen 7 5800X, Release + LTO builds typically sustain **5–7 million events/sec** single-threaded.<br>Performance scales linearly with symbol count and event volume.*
 
 ---
-
+<a id="replay-mode-lmdb-round-trip"></a>
 ## 🗃️ Replay Mode (LMDB Round-Trip)
 
 Generate, persist, and replay market events from LMDB.
@@ -95,7 +175,7 @@ Generate, persist, and replay market events from LMDB.
 ```
 
 ### Sample Output
-```
+```text
 Found 3 symbol(s): AAPL GOOG MSFT
 AAPL: 3043 events
 First 5 events:
@@ -107,7 +187,7 @@ First 5 events:
 ```
 
 ---
-
+<a id="detailed-single-thread-benchmarks"></a>
 ## 📊 Detailed Single-Thread Benchmarks
 
 | Build   | Symbols | Events | Time (ms) | Throughput (ev/s) | Notes        |
@@ -119,7 +199,7 @@ First 5 events:
 *(Ryzen 7 5800X, Windows 11, MSVC 19.44)*
 
 ---
-
+<a id="build--run"></a>
 ## 🔧 Build & Run
 
 ```bash
@@ -127,8 +207,8 @@ mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release -j
 ```
-
-## Example Run
+<a id="example-run"></a>
+### Example Run
 ```bash
 ./market_sim \
   --symbols AAPL,MSFT,GOOG \
@@ -140,7 +220,33 @@ cmake --build . --config Release -j
   --log store.mdb \
   --print-arena
 ```
+<a id="streaming-to-a-collector"></a>
+### ▶️ Streaming to a Collector
 
+Start collector:
+```bash
+./collector_server
+```
+Run simulator with streaming enabled:
+```bash
+./market_sim --events 500000 --grpc localhost:50051
+```
+Output:
+```yaml
+MarketSim Report
+---------------------------
+Symbols:           3
+Total events:      500000
+Adds:              146038
+Cancels:           40106
+Trades:            104000
+Elapsed:           176.9 ms
+Throughput:        2.82M ev/s
+---------------------------
+Collector ACK count: 290144
+```
+
+<a id="cli-flags"></a>
 ## ⚙️ CLI flags
 | Flag                  | Description                                       | Default          |
 | --------------------- | ------------------------------------------------- | ---------------- |
@@ -155,10 +261,11 @@ cmake --build . --config Release -j
 | `--read PATH`         | Replay events from LMDB                           | none             |
 | `--dump N`            | When reading, print first N events per symbol     | none             |
 | `--print-arena`       | Print allocator usage summary                     | off              |
+| `--grpc HOST:PORT`    | Stream generated events to a remote gRPC collector using the `MarketStream.Publish` RPC. Enables batched protobuf serialization and real-time delivery. | off |
 
 
 ---
-
+<a id="design-principles"></a>
 ## 🧭 Design Principles
 
 - **Allocator locality** -> per-symbol arenas eliminate cross-thread contention
@@ -169,18 +276,7 @@ cmake --build . --config Release -j
 - **Portable** -> header-only STL + LMDB C library (no external dependencies)
 
 ---
-
-## 🚀 Roadmap
-- [x] `LMDBStorage` persistence
-- [x] `LMDBReader` replay + `--dump` mode
-- [x] **NUMA-pinned multi-threading**
-- [ ] Add `market.proto` + gRPC tick stream
-- [ ] Flat SoA price levels (replace `std::pmr::map`)
-- [ ] Real-time visualization (ImGui / CSV)
-- [ ] Latency & allocator profiling tools
-
----
-
+<a id="references"></a>
 ## 📚 References
 
 - ISO C++17 §20.7 — Polymorphic Memory Resources

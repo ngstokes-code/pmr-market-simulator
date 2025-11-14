@@ -8,6 +8,7 @@
 namespace msim {
 
 enum class EventType : uint8_t { ORDER_ADD = 1, ORDER_CANCEL = 2, TRADE = 3 };
+enum class Side : uint8_t { BUY = 1, SELL = 2 };
 
 struct Event {
   uint64_t ts_ns{};
@@ -15,7 +16,7 @@ struct Event {
   std::string symbol;
   double price{};
   int32_t qty{};
-  char side{};  // 'B' or 'S'
+  Side side{};  // BUY or SELL
 
   std::string to_string() const {
     char buf[128];
@@ -82,7 +83,7 @@ struct Event {
     int32_t qty;
     std::memcpy(&qty, data + off, sizeof(qty));
     off += sizeof(qty);
-    char side = static_cast<char>(data[off++]);
+    Side side = static_cast<Side>(data[off++]);
     consumed = off;
     return Event{ts,  static_cast<EventType>(t), std::move(sym), price, qty,
                  side};
