@@ -6,13 +6,18 @@
 #include <vector>
 
 #include "box_muller.hpp"
-#include "grpc_storage.hpp"
+#ifdef MSIM_WITH_GRPC
+#include "msim/grpc_storage.hpp"
+#endif
 #include "order_book.hpp"
 #include "pmr_utils.hpp"
 #include "rng.hpp"
 #include "storage.hpp"
 
 namespace msim {
+#ifdef MSIM_WITH_GRPC
+class GrpcStorage;  // fwd declare incase MSIM_WTIH_GRPC off
+#endif
 
 struct SimConfig {
   uint64_t total_events = 100000;
@@ -24,9 +29,14 @@ struct SimConfig {
   uint64_t drift_period = 10000;
   std::string log_path;
   bool print_arena = false;
-  int dump_n = 0;           // number of events to print when reading
-  int num_threads = 1;      // default single-thread
+  int dump_n = 0;
+  int num_threads = 1;
   std::string grpc_target;  // "" = disabled
+
+  // Benchmark / determinism:
+  // false => deterministic synthetic timestamps (fast)
+  // true  => realtime steady_clock timestamps (slower)
+  bool realtime_ts = false;
 };
 
 class Simulator {
@@ -34,10 +44,15 @@ class Simulator {
   explicit Simulator(SimConfig cfg);
   void run();
   void run_mt();  // multithreaded / NUMA-aware version
+#ifdef MSIM_WITH_GRPC
   void set_grpc_sink(GrpcStorage* sink) { grpc_sink_ = sink; }
-
+#else
+  void set_grpc_sink(void*) {}  // no-op
+#endif
  private:
+#ifdef MSIM_WITH_GRPC
   GrpcStorage* grpc_sink_ = nullptr;
+#endif
   static void bind_to_core(
       size_t cord_id);  // Pins the calling thread to `core_id` to ensure
                         // NUMA-local allocations.
@@ -62,12 +77,11 @@ class Simulator {
   };
 
   struct ThreadContext {
-    std::vector<std::string> symbols;  // symbols assigned to this thread
-    std::unique_ptr<ArenaBundle> arena;
-    std::unordered_map<std::string, std::unique_ptr<OrderBook>> books;
-    std::unordered_map<std::string, double> mid;  // local midprice per symbol
-    std::unordered_map<std::string, std::vector<uint64_t>>
-        live;  // live order ids, for realistic cancellation logic
+    std::vector<std::string> symbols;               // local symbol names
+    std::unique_ptr<ArenaBundle> arena;             // per-thread arena
+    std::vector<std::unique_ptr<OrderBook>> books;  // same order as symbols
+    std::vector<double> mid;                        // same order as symbols
+    std::vector<std::vector<uint64_t>> live;        // live order ids per symbol
 
     // local RNG avoids cache contention on a shared generator
     Xoroshiro128Plus rng;
@@ -77,20 +91,25 @@ class Simulator {
     uint64_t adds = 0;
     uint64_t cancels = 0;
     uint64_t trades = 0;
-    uint64_t total_events = 0;  // total events processed by this thread
-    double elapsed_ms = 0.0;    // timing for this thread
+    // uint64_t total_events = 0;  // total events processed by this thread
+    double elapsed_ms = 0.0;  // timing for this thread
   };
 
   std::unordered_map<std::string, SymState> syms_;
   std::unique_ptr<IStorage> storage_;
-  std::uniform_int_distribution<int> qty_dist_{1, 100};
-  std::bernoulli_distribution side_dist_{0.5};
-  std::bernoulli_distribution add_dist_{0.9};
+
+  // std::uniform_int_distribution<int> qty_dist_{1, 100};
+  // std::bernoulli_distribution side_dist_{0.5};
+  // std::bernoulli_distribution add_dist_{0.9};
+
   uint64_t next_order_id_ = 1;
 
   uint64_t now_ns() const;
+  uint64_t make_ts(uint64_t i_event, uint32_t thread_id) const;
+
   double draw_price(double mid, uint64_t i_event, ThreadContext& ctx);
   void emit_event(const Event& e);
+
   static std::vector<std::string> default_symbols();
 };
 

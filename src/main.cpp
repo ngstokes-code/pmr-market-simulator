@@ -55,7 +55,9 @@ int main(int argc, char** argv) {
     else if (a == "--no-log") {
       no_log = true;
       cfg.log_path.clear();
-    } else if (a == "--grpc" && i + 1 < argc)
+    } else if (a == "--realtime-ts")
+      cfg.realtime_ts = true;
+    else if (a == "--grpc" && i + 1 < argc)
       cfg.grpc_target = argv[++i];
     else if (a == "--help") {
       std::cout
@@ -72,7 +74,8 @@ int main(int argc, char** argv) {
           << "  --print-arena        Print arena upstream usage\n"
           << "  --read PATH          Read and dump LMDB log instead of sim\n"
           << "  --dump N             Number of events to print per-symbol "
-             "(default 0)\n";
+             "(default 0)\n"
+          << "  --realtime-ts        Use realtime steady_clock timestamps (slower)\n";
       return 0;
     }
   }
@@ -111,9 +114,11 @@ int main(int argc, char** argv) {
       }
       return 0;
     }
-    std::cout.setf(std::ios::unitbuf);
     Simulator sim(cfg);
+
+#ifdef MSIM_WITH_GRPC
     std::unique_ptr<msim::GrpcStorage> grpc_sink;
+
     if (!cfg.grpc_target.empty()) {
       grpc_sink = std::make_unique<msim::GrpcStorage>(cfg.grpc_target);
       if (!grpc_sink->open()) {
@@ -121,13 +126,19 @@ int main(int argc, char** argv) {
                   << "\n";
         return 1;
       }
-      sim.set_grpc_sink(grpc_sink.get());  // new function we add
+      sim.set_grpc_sink(grpc_sink.get());
     }
+#endif
+
     (cfg.num_threads > 1) ? sim.run_mt() : sim.run();
+
+#ifdef MSIM_WITH_GRPC
     if (grpc_sink) {
       grpc_sink->close();
       std::cout << "Collector ACK count: " << grpc_sink->ack_count() << "\n";
     }
+#endif
+
   } catch (const std::exception& ex) {
     std::cerr << "Error: " << ex.what() << "\n";
     return 1;
