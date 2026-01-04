@@ -20,8 +20,8 @@ add_library(marketsim
     src/pmr_utils.cpp
     src/lmdb_storage.cpp
     src/lmdb_reader.cpp
-    lmdb/mdb.c   # LMDB core engine
-    lmdb/midl.c  # LMDB ID list helper
+    lmdb/mdb.c
+    lmdb/midl.c
 )
 
 target_include_directories(marketsim
@@ -29,19 +29,23 @@ target_include_directories(marketsim
   PUBLIC lmdb
 )
 
-# Enable Interprocedural Optimization (LTO) if available
-include(CheckIPOSupported)
-check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
-if(ipo_supported)
-  set_property(TARGET marketsim PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
+# ──────────────────────────────────────────────
+# Always build base executable (no gRPC yet)
+# ──────────────────────────────────────────────
+
+add_executable(market_sim
+    src/main.cpp
+)
+
+target_link_libraries(market_sim PRIVATE marketsim)
 
 # ──────────────────────────────────────────────
-# gRPC + Protobuf Integration (vcpkg CONFIG mode)
+# Optional gRPC + Protobuf integration
 # ──────────────────────────────────────────────
-option(MSIM_WITH_GRPC "Enable gRPC integration" ON)
+
+option(MSIM_WITH_GRPC "Enable gRPC integration" OFF)
+
 if(MSIM_WITH_GRPC)
-  # Use CONFIG mode
   find_package(Protobuf CONFIG REQUIRED)
   find_package(gRPC CONFIG REQUIRED)
 
@@ -52,76 +56,81 @@ if(MSIM_WITH_GRPC)
   set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/grpc_gen")
   file(MAKE_DIRECTORY ${GENERATED_DIR})
 
-  target_link_libraries(marketsim PUBLIC
-      gRPC::grpc++
-      protobuf::libprotobuf
-  )
-  target_include_directories(marketsim PUBLIC
-    ${GENERATED_DIR}
-  )
-
-  # Generate standard protobuf C++ files
+  # Generate protobuf C++ files
   protobuf_generate_cpp(
-      PROTO_SRCS
-      PROTO_HDRS
+      PROTO_SRCS PROTO_HDRS
       ${PROTO_FILE}
       PROTOC_OUT_DIR ${GENERATED_DIR}
   )
 
-  # gRPC plugin provided by vcpkg
-  set(GRPC_CPP_PLUGIN
-      "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/grpc/grpc_cpp_plugin${CMAKE_EXECUTABLE_SUFFIX}"
-  )
+  # gRPC plugin (safe for vcpkg / Windows)
+  set(GRPC_CPP_PLUGIN $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
-  # Generate gRPC bindings manually
+  # Generate gRPC client/server bindings
   add_custom_command(
       OUTPUT ${GENERATED_DIR}/market.grpc.pb.cc ${GENERATED_DIR}/market.grpc.pb.h
-      COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+      COMMAND $<TARGET_FILE:protobuf::protoc>
           --grpc_out=${GENERATED_DIR}
           --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
           --proto_path=${CMAKE_SOURCE_DIR}/proto
           ${PROTO_FILE}
       DEPENDS ${PROTO_FILE}
-      COMMENT "Generating gRPC service C++ code"
+      COMMENT "Generating gRPC service bindings"
   )
 
-  set(GRPC_SRCS "${GENERATED_DIR}/market.grpc.pb.cc")
-  set(GRPC_HDRS "${GENERATED_DIR}/market.grpc.pb.h")
+  set(GRPC_SRCS ${GENERATED_DIR}/market.grpc.pb.cc)
+  set(GRPC_HDRS ${GENERATED_DIR}/market.grpc.pb.h)
 
-  add_executable(market_sim
-      src/main.cpp
+  # Extend marketsim library with protobuf + gRPC
+  target_include_directories(marketsim PUBLIC ${GENERATED_DIR})
+  target_link_libraries(marketsim PUBLIC
+      protobuf::libprotobuf
+      gRPC::grpc++
+  )
+
+  # Extend the main executable with the generated RPC code
+  target_sources(market_sim PRIVATE
       ${PROTO_SRCS} ${PROTO_HDRS}
       ${GRPC_SRCS} ${GRPC_HDRS}
   )
-  target_link_libraries(market_sim PRIVATE
-      marketsim
-      gRPC::grpc++
-      protobuf::libprotobuf
-  )
 
+  # Collector server executable
   add_executable(collector_server
-    src/collector_server.cpp
-    ${PROTO_SRCS} ${PROTO_HDRS}
-    ${GRPC_SRCS} ${GRPC_HDRS}
-  )
-  target_include_directories(collector_server PRIVATE
-    ${GENERATED_DIR}
-  )
-  target_link_libraries(collector_server PRIVATE
-      gRPC::grpc++
-      protobuf::libprotobuf
+      src/collector_server.cpp
+      ${PROTO_SRCS} ${PROTO_HDRS}
+      ${GRPC_SRCS} ${GRPC_HDRS}
   )
 
+  target_include_directories(collector_server PRIVATE ${GENERATED_DIR})
+  target_link_libraries(collector_server PRIVATE
+      marketsim
+      protobuf::libprotobuf
+      gRPC::grpc++
+  )
 endif()
 
-# 5. Optional optimization flags
+option(MSIM_BUILD_TESTS "Build unit tests" ON)
+
+if(MSIM_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
+# ──────────────────────────────────────────────
+# Optional optimization flags
+# ──────────────────────────────────────────────
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
 if(ipo_supported)
+  set_property(TARGET marketsim PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
   set_property(TARGET market_sim PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 # ──────────────────────────────────────────────
-# Optional stats flag
+# Optional extra logging
 # ──────────────────────────────────────────────
+
 option(ENABLE_STATS "Enable extra stats logging" ON)
 if(ENABLE_STATS)
   target_compile_definitions(marketsim PUBLIC ENABLE_STATS=1)
@@ -129,9 +138,10 @@ if(ENABLE_STATS)
 endif()
 
 # ──────────────────────────────────────────────
-# Windows-specific cleanups
+# Windows-specific LMDB warnings
 # ──────────────────────────────────────────────
-if (MSVC)
-  # Suppress some C warnings from LMDB's C files
-  target_compile_options(marketsim PRIVATE /wd4996 /wd4267 /wd4244 /wd4333 /wd4172)
+if(MSVC)
+  target_compile_options(marketsim PRIVATE
+      /wd4996 /wd4267 /wd4244 /wd4333 /wd4172
+  )
 endif()
