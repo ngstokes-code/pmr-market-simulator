@@ -85,13 +85,11 @@ class Simulator {
 
     // local RNG avoids cache contention on a shared generator
     Xoroshiro128Plus rng;
-    NormalBM
-        normal;  // box-muller transform... uniform dist (0,1) -> normal dist
+    NormalBM normal;  // box-muller transform
 
     uint64_t adds = 0;
     uint64_t cancels = 0;
     uint64_t trades = 0;
-    // uint64_t total_events = 0;  // total events processed by this thread
     double elapsed_ms = 0.0;  // timing for this thread
   };
 
