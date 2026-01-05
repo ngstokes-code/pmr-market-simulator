@@ -445,6 +445,26 @@ void Simulator::run_mt() {
             << "Elapsed (max): " << max_ms << " ms\n"
             << "Throughput:    " << static_cast<uint64_t>(evps) << " ev/s\n"
             << "-------------------------------\n";
+    
+  const uint64_t steps = cfg_.total_events;
+  const uint64_t ops = adds + cancels + trades;   // “state-changing” events emitted
+
+  // Pick ONE time basis for both numbers:
+  // - If you treat threads as independent, use max thread time (max_ms)
+  // - Otherwise use overall wall time (elapsed_ms)
+  // Your printed output already shows Elapsed (max), so it’s consistent to use max_ms.
+  const double ms = max_ms;
+
+  const double steps_per_s = (steps * 1000.0) / ms;
+  const double ops_per_s   = (ops   * 1000.0) / ms;
+
+  std::cout
+    << "Total steps:   " << steps << "\n"
+    << "Book ops:      " << ops << " (adds+cancels+trades)\n"
+    << "Elapsed (max): " << ms << " ms\n"
+    << "Steps/sec:     " << static_cast<uint64_t>(steps_per_s) << "\n"
+    << "(steps -> generator iterations. book -> matching engine)\n"
+    << "Book ops/sec:  " << static_cast<uint64_t>(ops_per_s) << "\n";
 }  // Simulator::run_mt (multi-threaded)
 
 }  // namespace msim
