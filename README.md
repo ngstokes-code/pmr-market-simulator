@@ -142,3 +142,7 @@ THREADS=1 EVENTS=3000000 REPS=3 scripts/bench.sh
 - `docs/architecture.md` — core architecture + invariants (LOB / harness / arenas)
 - `docs/streaming.md` — gRPC collector, batching, expected throughput
 - `docs/persistence.md` — LMDB log format + replay mode
+
+# Disclaimer
+
+This is a personal, non-commercial performance engineering project for educational purposes. It is not used for live trading, does not include trading strategies, and does not consume proprietary or paid market data. Built on personal time/equipment; not affiliated with any employer. 
