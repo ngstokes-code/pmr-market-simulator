@@ -1,5 +1,7 @@
 # PMR Market Simulator
 
+> **Independent work:** No materials, code, data, or inspiration from my employer informed this project.
+
 **A price-time order book and a Nasdaq ITCH replay, with independent checks for both.**
 
 [Watch the AMD replay](docs/replay/assets/amd-open-5x.mp4) · [Step through matching](docs/replay/index.html) · [Follow a feed example](docs/replay/feed.html) · [Reproduce the checks](docs/reproduce.md)
