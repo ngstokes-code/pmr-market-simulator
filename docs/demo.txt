@@ -1,0 +1,56 @@
+1. Sellers and buyers rest. Two sells share the price 100.02.
+  > sell #1 5 @ 100.03: accepted, executed 0, rested 5
+  > sell #2 3 @ 100.02: accepted, executed 0, rested 3
+  > sell #3 4 @ 100.02: accepted, executed 0, rested 4
+  > sell #4 10 @ 100.05: accepted, executed 0, rested 10
+  > buy  #5 6 @  99.98: accepted, executed 0, rested 6
+  > buy  #6 2 @  99.99: accepted, executed 0, rested 2
+      ask 100.05 | #4 x10
+      ask 100.03 | #1 x5
+      ask 100.02 | #2 x3 #3 x4
+      ------------ spread 3 ticks
+      bid  99.99 | #6 x2
+      bid  99.98 | #5 x6
+
+2. A buy for 5 at 100.02. Price first: it takes the lowest ask. Then time: at 100.02, #2 arrived before #3, so #2 executes in full first.
+  > buy  #7 5 @ 100.02: accepted, executed 5, rested 0
+      execution: #7 x3 @ 100.02 against resting #2
+      execution: #7 x2 @ 100.02 against resting #3
+      ask 100.05 | #4 x10
+      ask 100.03 | #1 x5
+      ask 100.02 | #3 x2
+      ------------ spread 3 ticks
+      bid  99.99 | #6 x2
+      bid  99.98 | #5 x6
+
+3. #3 cancels. Its level empties, so the best ask moves up a tick.
+  > cancel #3: removed
+      ask 100.05 | #4 x10
+      ask 100.03 | #1 x5
+      ------------ spread 4 ticks
+      bid  99.99 | #6 x2
+      bid  99.98 | #5 x6
+
+4. A sell for 10 at 99.98 walks the book. It executes against every bid at or above its limit, best price first, and the last 2 rest as the new best ask.
+  > sell #8 10 @  99.98: accepted, executed 8, rested 2
+      execution: #8 x2 @  99.99 against resting #6
+      execution: #8 x6 @  99.98 against resting #5
+      average price 99.9825, 0.75 ticks per unit worse than the best price it met
+      ask 100.05 | #4 x10
+      ask 100.03 | #1 x5
+      ask  99.98 | #8 x2
+      ------------
+
+5. An order whose id is resting now is refused, and nothing changes.
+  > buy  #8 1 @  99.90: duplicate_id
+
+6. Queue position. Two buys join at 99.97, #9 before #10. A sell for 3 reaches #9 only. #10 waits behind it, at the same price.
+  > buy  #9 3 @  99.97: accepted, executed 0, rested 3
+  > buy  #10 3 @  99.97: accepted, executed 0, rested 3
+  > sell #11 3 @  99.97: accepted, executed 3, rested 0
+      execution: #11 x3 @  99.97 against resting #9
+      ask 100.05 | #4 x10
+      ask 100.03 | #1 x5
+      ask  99.98 | #8 x2
+      ------------ spread 1 tick
+      bid  99.97 | #10 x3

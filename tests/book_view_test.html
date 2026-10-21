@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Matching visualizer checks</title>
+<style>body{font:14px system-ui;margin:20px}iframe{display:block;width:1280px;height:1100px;max-width:100%;border:1px solid #ccc}pre{white-space:pre-wrap}</style>
+<h1>Matching visualizer checks</h1><pre id="result">RUNNING</pre><iframe id="view" title="Matching visualizer"></iframe>
+<script>
+"use strict";
+const view=document.getElementById("view"), output=document.getElementById("result"), passed=[];
+const check=(value,message)=>{if(!value)throw new Error(message);passed.push(message);};
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+view.addEventListener("load",async()=>{
+ try{
+  const w=view.contentWindow,d=view.contentDocument,$=id=>d.getElementById(id);
+  const jump=n=>{$("timeline").value=n;$("timeline").dispatchEvent(new w.Event("input",{bubbles:true}));};
+  const select=key=>d.querySelector(`button[data-scene="${key}"]`).click();
+  const index=()=>Number(d.body.dataset.frame);
+  check(d.body.dataset.scene==="burst"&&index()===944,"Deep link opens a dense checked state");
+  check($("orders").querySelectorAll('[data-live="true"]').length===160,"160 orders are individually drawn");
+  for(const scene of w.MSIM_BOOK.cases){
+   select(scene.key);
+   for(const n of [...new Set([0,1,scene.initial,scene.frames.length])]){
+    jump(n);
+    const expected=new Map();
+    for(const f of scene.frames.slice(0,n)){f.remove.forEach(id=>expected.delete(id));f.updates.forEach(o=>expected.set(o[0],o));}
+    check($("orders").querySelectorAll('[data-live="true"]').length===expected.size,`${scene.key} / ${n}: exact live-node count`);
+    check(Number($("live-count").textContent.replaceAll(",",""))===expected.size,`${scene.key} / ${n}: truthful displayed scale`);
+   }
+  }
+  select("limits");jump(6);
+  const before=[...$("orders").querySelectorAll('[data-live="true"]')].map(n=>n.dataset.ref).sort().join();
+  jump(7);
+  check($("status").textContent==="NO ROOM","Capacity rejection is named in plain language");
+  check([...$("orders").querySelectorAll('[data-live="true"]')].map(n=>n.dataset.ref).sort().join()===before,"Rejected order leaves all existing entries intact");
+  check(!$("tape").querySelector(".trade"),"Rejected crossing order creates no trades");
+  jump(8);check($("tape").querySelectorAll(".trade").length===3,"Exact fill consumes all three resting sellers");
+  jump(7);check(!$("tape").querySelector(".trade"),"Rewind removes future trades");
+  jump(10);check($("status").textContent==="DUPLICATE ID","Duplicate live identity is rejected");
+  jump(12);check($("status").textContent==="BAD QUANTITY","Invalid quantity does not enter the book");
+  select("sweep");jump(21);
+  check($("tape").querySelectorAll(".trade").length===5,"One order visibly trades across five prices");
+  const prices=[...$("ask-index").children].map(n=>Number(n.textContent));
+  check(prices.at(-1)===Math.min(...prices),"Best selling price is at the index end");
+  select("basics");jump(0);$("pace").value="3";$("play").click();await wait(240);$("play").click();
+  const stopped=index();check(stopped>0,"Play advances more than a static screenshot");await wait(240);check(index()===stopped,"Pause cancels further advancement");
+  $("restart").click();check(index()===0,"Restart returns to the actual empty scene");
+  d.body.dispatchEvent(new w.KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));check(index()===1,"Keyboard stepping works");
+  $("next").focus();check(d.activeElement===$("next"),"Controls take keyboard focus");
+  for(const width of [1280,768,390,320]){view.style.width=width+"px";await wait(30);check(d.documentElement.scrollWidth<=d.documentElement.clientWidth+1,`Page stays within ${width}px; diagram pans internally`);}
+  if(w.matchMedia("(prefers-reduced-motion: reduce)").matches)check(w.getComputedStyle($("orders").querySelector(".node")).transitionDuration==="0s","Reduced motion removes node transitions");
+  output.textContent=`PASS: ${passed.length} matching browser checks\n`+passed.join("\n");document.title="PASS — Matching visualizer checks";
+ }catch(error){output.textContent="FAIL: "+error.stack+"\n"+passed.join("\n");document.title="FAIL — Matching visualizer checks";}
+});
+view.src="../docs/replay/index.html#burst-944";
+</script>
+</html>

@@ -3,3 +3,10 @@ CMakeFiles/
 .venv/
 *.mdb
 *.mdb-lock
+build-*/
+results/*/streams/
+__pycache__/
+data/
+/results/
+**/.DS_Store
+/notes/

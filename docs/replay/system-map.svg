@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+  <title id="title">PMR Market Simulator system map</title>
+  <desc id="desc">Two distinct paths: synthetic commands enter a price-time engine checked against a map and FIFO reference; ITCH bytes pass through checked decoding, ordered identity validation and symbol-owned books, with accounting checked from raw bytes by an independent Python implementation.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#101b20"/><stop offset="1" stop-color="#091114"/></linearGradient>
+    <linearGradient id="mint" x2="1" y2="1"><stop stop-color="#8ef2cf"/><stop offset="1" stop-color="#4bc9af"/></linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#738b8e"/></marker>
+    <style>
+      text{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .eyebrow{font-size:12px;font-weight:700;letter-spacing:2.2px;fill:#7fa5a2}
+      .title{font-size:36px;font-weight:700;letter-spacing:-1px;fill:#eef7f3}
+      .sub{font-size:15px;fill:#9db2b0}
+      .label{font-size:11px;font-weight:700;letter-spacing:1.5px;fill:#8ba5a2}
+      .head{font-size:18px;font-weight:650;fill:#edf6f2}
+      .body{font-size:13px;fill:#a9bfba}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;fill:#d2e4de}
+      .tiny{font-size:11px;fill:#89a19e}
+    </style>
+  </defs>
+  <rect width="1200" height="660" rx="22" fill="url(#bg)"/>
+  <path d="M24 1h1152a23 23 0 0 1 23 23v2H1v-2A23 23 0 0 1 24 1Z" fill="url(#mint)" opacity=".9"/>
+  <text x="54" y="72" class="eyebrow">PMR / MARKET SYSTEMS LABORATORY</text>
+  <text x="54" y="119" class="title">Two contracts. Independent checks.</text>
+  <text x="54" y="148" class="sub">Keep synthetic matching, reported-book reconstruction and historical accounting explicit.</text>
+
+  <text x="54" y="199" class="label">01 / SYNTHETIC MATCHING</text>
+  <rect x="54" y="216" width="208" height="112" rx="12" fill="#142329" stroke="#294148"/>
+  <text x="76" y="249" class="head">Commands</text>
+  <text x="76" y="276" class="mono">ADD · CANCEL · SWEEP</text>
+  <text x="76" y="302" class="body">Small, inspectable histories</text>
+  <path d="M274 272h52" stroke="#738b8e" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="340" y="216" width="278" height="112" rx="12" fill="#182a2d" stroke="#47786f"/>
+  <text x="364" y="249" class="head">Price–time engine</text>
+  <text x="364" y="276" class="body">Best eligible price, then FIFO</text>
+  <text x="364" y="302" class="body">Capacity checked before mutation</text>
+  <path d="M630 272h52" stroke="#738b8e" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="696" y="216" width="450" height="112" rx="12" fill="#142329" stroke="#294148"/>
+  <text x="720" y="249" class="head">Independent map + queue model</text>
+  <text x="720" y="276" class="body">Compare outcome, executions and complete book state</text>
+  <text x="720" y="302" class="body">Planted wrong answers must be caught</text>
+  <circle cx="1112" cy="245" r="10" fill="#75e0bd"/>
+  <path d="m1107 245 4 4 7-9" fill="none" stroke="#10201f" stroke-width="2"/>
+
+  <text x="54" y="379" class="label">02 / REPORTED MARKET STATE</text>
+  <rect x="54" y="396" width="208" height="112" rx="12" fill="#142329" stroke="#294148"/>
+  <text x="76" y="429" class="head">ITCH 5.0 bytes</text>
+  <text x="76" y="456" class="body">Length, fields and order</text>
+  <text x="76" y="482" class="body">validated before replay</text>
+  <path d="M274 452h52" stroke="#738b8e" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="340" y="396" width="278" height="112" rx="12" fill="#182a2d" stroke="#47786f"/>
+  <text x="364" y="429" class="head">Ordered coordinator</text>
+  <text x="364" y="456" class="body">Global live-reference identity</text>
+  <text x="364" y="482" class="body">One book writer per symbol</text>
+  <path d="M630 452h52" stroke="#738b8e" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="696" y="396" width="450" height="112" rx="12" fill="#142329" stroke="#294148"/>
+  <text x="720" y="429" class="head">Reconstructed displayed books</text>
+  <text x="720" y="456" class="body">Exact bounded state checks across workers</text>
+  <text x="720" y="482" class="body">No venue allocation is inferred</text>
+
+  <path d="M158 508v38h175" fill="none" stroke="#738b8e" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="340" y="534" width="806" height="76" rx="12" fill="#172126" stroke="#4c5960"/>
+  <text x="364" y="566" class="head">Separate raw-byte accounting check</text>
+  <text x="364" y="590" class="body">Independent Python raw-byte ledger checks symbols, intervals and corrections</text>
+  <text x="54" y="632" class="tiny">Every result is bounded by its named source, input and executed checks. Capture continuity remains unverified.</text>
+</svg>

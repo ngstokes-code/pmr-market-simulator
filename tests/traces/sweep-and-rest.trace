@@ -1,0 +1,13 @@
+# msim-trace 1
+#
+# A buy sweeps two ask levels in price order, stops before a third that it
+# does not reach, and rests its remainder at its own limit. A later sell then
+# executes against that remainder at the remainder's price, 103, not at its
+# own limit, 101.
+1 add 1 S 101 5
+2 add 2 S 102 5
+3 add 3 S 104 5
+4 add 4 B 103 12
+5 add 5 S 101 1
+6 cancel 3
+7 cancel 4

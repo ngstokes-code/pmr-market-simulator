@@ -1,0 +1,527 @@
+{
+  "all_23_release_executables_byte_identical": true,
+  "changed_cpp_executables": {},
+  "changed_implementation": {
+    "scripts/render_tape.py": {
+      "after_sha256": "bd22ab69bba9f017a2ce6f5dc4b09a3f3885283cb2c5aa79a124dea28c9dd15d",
+      "before_sha256": "31fd54706720806847a21ee2518cb902f0881c77cb9196d47444e619c7c74de2"
+    },
+    "tests/tape_view_test.html": {
+      "after_sha256": "0d8b3204593781f853cac18b651e17cc16e56f208dbeea925ae65d0183f55c8a",
+      "before_sha256": "836ee12096354bb3ee845825ce0b727617f71b897d80fe7316c56f5419439ff4"
+    }
+  },
+  "comment_only": false,
+  "core_implementation_unchanged": true,
+  "cpp_implementation_unchanged": true,
+  "evidence_policy": {
+    "earlier_platforms": "Original platform IDs and outcomes retained, including unresolved Linux ARM64 TSan",
+    "historical_study": "Accounting, research formulas and previously reported results are unchanged and retain their original source identity",
+    "measurements": "No timing activity rerun; all benchmark executables, inputs and original measurement files remain byte-identical",
+    "presentation": "Current-source Release 23/23, seven-stage demonstration, six browser harness modes and an independently checked AMD opening excerpt. This candidate includes the ten-second MP4 preview; the raw tape stays outside Git. Capture continuity and public display rights remain unverified."
+  },
+  "evidence_source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907",
+  "other_implementation_hashes_unchanged": true,
+  "predecessor_revision": {
+    "all_23_release_executables_byte_identical": false,
+    "changed_cpp_executables": {
+      "itch_observe": {
+        "after_sha256": "0d4d547eabed879f4a354921c7c2ef9a5cab1f018b3d1c006841eb617c1f3d59",
+        "before_sha256": "3c0aeb463baaf171d4353b7945cdbbf2950faebeee04cadc98db88c38763728b"
+      }
+    },
+    "changed_implementation": {
+      "scripts/render_tape.py": {
+        "after_sha256": "31fd54706720806847a21ee2518cb902f0881c77cb9196d47444e619c7c74de2",
+        "before_sha256": null
+      },
+      "tests/research_test.py": {
+        "after_sha256": "f207a5de815986f57801c65c58e1eb650586d35b1216af5312a9b4f53c4381e7",
+        "before_sha256": "2ef81b2d10e0ba0f1b5a8758e7e21a63f25f3837f5adc6996ae8f3b1bfdbd7a0"
+      },
+      "tests/tape_view_test.html": {
+        "after_sha256": "836ee12096354bb3ee845825ce0b727617f71b897d80fe7316c56f5419439ff4",
+        "before_sha256": null
+      },
+      "tools/itch_observe.cpp": {
+        "after_sha256": "ab6bb089daaafa4c7c676ad44ce5a7d28135006740a1cac634d8a0137856d61f",
+        "before_sha256": "8effc76762efd6a47e800410c4f9f25b2f73d8715fe9284c6b9710e37e6e6175"
+      }
+    },
+    "comment_only": false,
+    "core_implementation_unchanged": true,
+    "cpp_implementation_unchanged": false,
+    "evidence_policy": {
+      "earlier_platforms": "Original IDs/outcomes retained, including unresolved Linux ARM64 TSan",
+      "historical_study": "Earlier accounting/research receipts remain unchanged, not relabelled",
+      "measurements": "All benchmark executables and original measurement files remain byte-identical; no new timings",
+      "presentation": "Current Release, seven-stage demo, focused observer/volume ASan/UBSan, raw-prefix agreement and browser checks; historical media excluded pending display rights"
+    },
+    "evidence_source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907",
+    "other_implementation_hashes_unchanged": true,
+    "predecessor_revision": {
+      "all_23_release_executables_byte_identical": false,
+      "changed_cpp_executables": {
+        "diff_replay": {
+          "after_sha256": "349fe9cde5b2351315f76867f94890576dbe586172011ebe89371ee5b2c34b7d",
+          "before_sha256": "e4193e706fd67b486a9666ab38e697ed03979d8e08f620e712d3e8db96ad96f5"
+        }
+      },
+      "changed_implementation": {
+        "scripts/render_book.py": {
+          "after_sha256": "20e82ff9be579483cb37f32f2b4430e7779fc1c1742973d06192a0e9d76c256a",
+          "before_sha256": null
+        },
+        "tests/benchmark_test.py": {
+          "after_sha256": "a7ea2cf8be43d8aefbe03abbd18996848d1c4c76e240cad20c9f3c0a99d12337",
+          "before_sha256": "61b2f60fdf336266bf67a7bb2fa1616f078c0c6e15ffca95d13e99aa365f2e74"
+        },
+        "tests/book_view_test.html": {
+          "after_sha256": "4448122ffa329705abffe4edb3ec6c3fb745ff3e49e218eacc540cf16b26f55c",
+          "before_sha256": null
+        },
+        "tests/replay_view_test.html": {
+          "after_sha256": "adef34a1b64a14bf992f8dcc8ab90f0c069833ba3bc78f1b19f0048d8e7455ff",
+          "before_sha256": "23429da48b35817ce9431b764eb553529f1aee82551976b90e4ff918a0c7aef7"
+        },
+        "tools/diff_replay.cpp": {
+          "after_sha256": "562ea537878367112065d9ccda223bf9fba6cec01e0e9de3c03ea403e8c146be",
+          "before_sha256": "c3546362e754ea6bfa1b01c4fe609465f2aff580e6810430324547db4ee18d25"
+        }
+      },
+      "comment_only": false,
+      "core_implementation_unchanged": true,
+      "cpp_implementation_unchanged": false,
+      "evidence_policy": {
+        "earlier_platforms": "Keep original identities and outcomes, including Linux ARM64 TSan failures",
+        "historical_study": "Not rerun or relabelled; feed, accounting and research implementation unchanged",
+        "measurements": "Original source IDs retained; every benchmark executable remains byte-identical",
+        "presentation": "Four synthetic matching scenes with complete per-command reference and invariant gates; diagnostic ASan/UBSan, current Release and real-browser checks"
+      },
+      "evidence_source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907",
+      "other_implementation_hashes_unchanged": true,
+      "predecessor_revision": {
+        "all_23_release_executables_byte_identical": true,
+        "changed_implementation": {
+          "scripts/render_replay.py": {
+            "after_sha256": "5c28703e1b41a222f26bc0410497d87aa70bc11e29420a991c9a09f44a89a2e7",
+            "before_sha256": null
+          },
+          "scripts/research.py": {
+            "after_sha256": "f7f626f598818230388f1cf74b90c6f100ea78a84ead78fad6bcec90ad384d80",
+            "before_sha256": "cb793d2808fe13a08211cea0170853c4493b4eae6c262cbf74e90145d16cdc19"
+          },
+          "tests/replay_view_test.html": {
+            "after_sha256": "23429da48b35817ce9431b764eb553529f1aee82551976b90e4ff918a0c7aef7",
+            "before_sha256": null
+          },
+          "tests/research_test.py": {
+            "after_sha256": "2ef81b2d10e0ba0f1b5a8758e7e21a63f25f3837f5adc6996ae8f3b1bfdbd7a0",
+            "before_sha256": "3c49988891b714789286a01699d587bde8ee52bdef54a19892131f83d854fb1b"
+          }
+        },
+        "comment_only": false,
+        "cpp_implementation_unchanged": true,
+        "evidence_policy": {
+          "earlier_platforms": "Keep original source IDs and outcomes, including unresolved Linux ARM64 TSan",
+          "historical_study": "Not rerun or relabelled; reconstruction and analytical formulas unchanged; optional tracing is exercised on the original demo",
+          "original_measurements": "Keep original source IDs; all C++ executables are byte-identical to the provider generation",
+          "presentation": "Current-source Release and seven-stage demo; browser renders retained snapshots only; exact demo input, not arbitrary feeds"
+        },
+        "evidence_source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907",
+        "other_implementation_hashes_unchanged": true,
+        "predecessor_revision": {
+          "changed_implementation": {
+            "CMakeLists.txt": {
+              "after_sha256": "6e7b31ac64a177bb1296847a2df8bafcf5fdd0b7d8faf1d735e6ab412d9cfd95",
+              "before_sha256": "cd559e9c96c889cea362a3376baf8395d65c3d2bb8327b9b202926cb191362d9"
+            },
+            "include/msim/sha256.hpp": {
+              "after_sha256": "a5886c1ec90c612666103e24c2fc14ef36cf88d0ad6e9b06a8bc6ef0e3b1f846",
+              "before_sha256": "15c3237eefced732b956ab829660aa677f6bd0f68ec5d66236d63695711bcba5"
+            },
+            "scripts/run.py": {
+              "after_sha256": "9ae630888e681706c40faa5f9ca2ec383699ee83523f780e160f80101ecd9f6a",
+              "before_sha256": "f1147ff542416ab5a4e29e4a8a0f72621a037e6208e8c339b6551d18e231fd2f"
+            },
+            "tests/itch_test.cpp": {
+              "after_sha256": "a120295b8c1b8d651968abddb49b8e9e1398815ec16fd6a7ecac51d275c4b4d2",
+              "before_sha256": "e4ef6eb6cb380c901c30215f4e127655837e5eb4aa71f9e3c7d2278e2214507c"
+            },
+            "tests/release_regression_test.py": {
+              "after_sha256": "77ca2256ca6433e314ab36c88f2cc1b8955cbf784b81341ba9a8f5a000592a58",
+              "before_sha256": "775b4b4f3c49cff0705369295c989d9e2491d8d5b6ab7be24157c4de077819e2"
+            }
+          },
+          "comment_only": false,
+          "evidence_policy": {
+            "earlier_platforms": "Keep original source IDs and outcomes, including unresolved Linux TSan",
+            "historical_study": "Original e7c251 generation; not rerun or relabelled; protocol/reconstruction/research code unchanged",
+            "original_engine_and_structure": "Retained original generation; matching/structure executables remain byte-identical",
+            "provider": "New matched builds and current-source verification have separate records"
+          },
+          "evidence_source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907",
+          "other_implementation_hashes_unchanged": true,
+          "predecessor_revision": {
+            "all_23_release_executables_byte_identical": true,
+            "changed_files": {
+              "CMakeLists.txt": {
+                "after_sha256": "cd559e9c96c889cea362a3376baf8395d65c3d2bb8327b9b202926cb191362d9",
+                "before_sha256": "1919740e24a0ac23b4511a393f61e1121671abfff87fc4e3c56463e656d8f3e0",
+                "changed_comment_lines": [
+                  48,
+                  49,
+                  71,
+                  72
+                ],
+                "line_count": 140
+              },
+              "bench/book_bench.cpp": {
+                "after_sha256": "cc71bf4fed66f4e1eebaa16e44b22cc635e34a42d3617558ccae3740828a0a67",
+                "before_sha256": "dc4d3fe9a12366f36d9f2ed406738c8eac0ee39b0082b50e9b37be1e717fb929",
+                "changed_comment_lines": [
+                  8,
+                  161,
+                  219,
+                  220,
+                  532
+                ],
+                "line_count": 794
+              },
+              "include/msim/book_types.hpp": {
+                "after_sha256": "f6ed18c12564385273a14e99af64270470d978fe8fa2caa98792d5bd7946af17",
+                "before_sha256": "589be283ad4aa901c377e274f9d33353ebf936f4b0421f5dc808b360d9d06459",
+                "changed_comment_lines": [
+                  55
+                ],
+                "line_count": 95
+              },
+              "include/msim/feed_book.hpp": {
+                "after_sha256": "abf8a1238d352f0c0611fea113f205581bb5282e78d4f795a787d7c3129d65a7",
+                "before_sha256": "43717fe4b46b3cfeba8cea7b7518d881ca84f23c7438a005e2a36c394d366941",
+                "changed_comment_lines": [
+                  19,
+                  20,
+                  26,
+                  27,
+                  36,
+                  54,
+                  62
+                ],
+                "line_count": 193
+              },
+              "include/msim/ladder.hpp": {
+                "after_sha256": "f8860676eb474593802223deb5456b41d1d67ac65bfbf44aa8a9bcbc0dcc1c79",
+                "before_sha256": "5ad9b3bdabb2be28377fb5fe41ae64d3c0f2f5e8d48f3d9058cb38f8440a32b4",
+                "changed_comment_lines": [
+                  9,
+                  10,
+                  11
+                ],
+                "line_count": 24
+              },
+              "include/msim/order_book.hpp": {
+                "after_sha256": "a456acb2ad343c0f614e011b5ee3c88f4a1e75db4748e6eeb9faaec413afd8f5",
+                "before_sha256": "d97267fe55fa7b728b772c999e26e15f010ada0c292f16153655abb562b16317",
+                "changed_comment_lines": [
+                  18,
+                  19,
+                  20,
+                  28,
+                  29,
+                  30
+                ],
+                "line_count": 138
+              },
+              "include/msim/rng.hpp": {
+                "after_sha256": "d3c110be1a5435e6ae332a0b5f93af65213e3f965fa94665359782dffc3f9e4a",
+                "before_sha256": "c0928330d1ecf436cf5c485316440b5c11e7810a5146bd754c6a76c345508f18",
+                "changed_comment_lines": [
+                  1
+                ],
+                "line_count": 51
+              },
+              "include/msim/workload.hpp": {
+                "after_sha256": "2c1572695fca47a858404f1c882e546f90ca6c059af15946ea31c89a20bab5b0",
+                "before_sha256": "b917a2e2b0b3d746673541d7e9acbe084566ea49f30669ffbca779c4a551b0e5",
+                "changed_comment_lines": [
+                  16
+                ],
+                "line_count": 72
+              },
+              "src/feed_book.cpp": {
+                "after_sha256": "9c7e6a4d9480ef8cdd45e21946b3d8eb186180972e3bb977e6f3423a172a606d",
+                "before_sha256": "b6d1f1daf8ed3fd04608539576edb1f1326bd2105673fd33faa02335bf0a0221",
+                "changed_comment_lines": [
+                  135,
+                  136
+                ],
+                "line_count": 354
+              },
+              "src/workload.cpp": {
+                "after_sha256": "972975520c2707ff69c9b9eec818e986913871a2b3474e154e633066282f72e1",
+                "before_sha256": "ddb7c6106740b573475f461d481cd76463f522aa2ef67032d85e596e91745410",
+                "changed_comment_lines": [
+                  297,
+                  298,
+                  341,
+                  342
+                ],
+                "line_count": 601
+              }
+            },
+            "comment_only": true,
+            "evidence_policy": "Original measurements and historical/platform receipts keep their original source IDs. Final Release and demo run on the comment revision. No timing rerun or retrospective strict admission.",
+            "evidence_source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907",
+            "executable_sha256": {
+              "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+              "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+              "diff_replay": "e4193e706fd67b486a9666ab38e697ed03979d8e08f620e712d3e8db96ad96f5",
+              "itch_observe": "533e1ee33c2b8914c7c959723cc34fe4ec1d1a377b841152ddd40d10d367bbf6",
+              "itch_replay": "9c044c6e602fbdc00d12e5eec9dec25263f82587fb14dfe92b280fe31678c430",
+              "itch_volume": "1d0d02c82663f932887f483000add8cd5a36c995c6a1dc1d93d25acdc64acc73",
+              "replay_bench": "4a9e8b8cfa2e9c2966e8b8d00ea848ebc0e9ba806edbe3e3e501dfb99d676ce3",
+              "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+              "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+              "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+              "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+              "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+              "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+              "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+              "tests/itch_test": "db5dc8a521577570e3dd2f1f212186f410c039c72b324d151631c9bf502241f4",
+              "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+              "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+              "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+              "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+              "tests/replay_test": "7dc9ce40f83c7062c2b42c275b9f1029f73ed8f3e54d808335942ae2ad72b554",
+              "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+              "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+              "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+            },
+            "final_implementation_files": 88,
+            "original_implementation_files": 88,
+            "other_implementation_hashes_unchanged": true,
+            "relationship": "Comment-only revision; identical executable statements and source line counts",
+            "source_id": "5b1544cee9560332a97ac61b1ec22819c30dc4c3edd1e129abc008a60ba29f6f"
+          },
+          "previous_source_id": "5b1544cee9560332a97ac61b1ec22819c30dc4c3edd1e129abc008a60ba29f6f",
+          "relationship": "System SHA-256 provider on Apple, portable fallback/selection, provider boundary and runner checks",
+          "schema": 2,
+          "source_id": "8b18928c9fc98316c1bedb27e8800c61c2b01fd7c0bd978aa466c33f70584f8d",
+          "unchanged_executable_sha256": {
+            "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+            "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+            "diff_replay": "e4193e706fd67b486a9666ab38e697ed03979d8e08f620e712d3e8db96ad96f5",
+            "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+            "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+            "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+            "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+            "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+            "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+            "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+            "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+            "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+            "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+            "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+            "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+            "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+            "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+          }
+        },
+        "previous_source_id": "8b18928c9fc98316c1bedb27e8800c61c2b01fd7c0bd978aa466c33f70584f8d",
+        "relationship": "Offline rendering of checked original-demo snapshots, optional read-only scenario trace and focused presentation checks",
+        "research_formulas_unchanged": true,
+        "schema": 3,
+        "source_id": "1c7fce900063b6d61809c3d1463a0a7eb32da9ee5b2a76698ca5eead2c40b9ea",
+        "unchanged_executable_sha256": {
+          "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+          "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+          "diff_replay": "e4193e706fd67b486a9666ab38e697ed03979d8e08f620e712d3e8db96ad96f5",
+          "itch_observe": "3c0aeb463baaf171d4353b7945cdbbf2950faebeee04cadc98db88c38763728b",
+          "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+          "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+          "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+          "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+          "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+          "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+          "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+          "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+          "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+          "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+          "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+          "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+          "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+          "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+          "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+          "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+          "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+          "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+          "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+        }
+      },
+      "previous_source_id": "1c7fce900063b6d61809c3d1463a0a7eb32da9ee5b2a76698ca5eead2c40b9ea",
+      "relationship": "Bounded reference-checked JSON diagnostic and animated matching scenes; original feed viewer retained separately",
+      "release_executable_sha256": {
+        "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+        "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+        "diff_replay": "349fe9cde5b2351315f76867f94890576dbe586172011ebe89371ee5b2c34b7d",
+        "itch_observe": "3c0aeb463baaf171d4353b7945cdbbf2950faebeee04cadc98db88c38763728b",
+        "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+        "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+        "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+        "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+        "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+        "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+        "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+        "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+        "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+        "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+        "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+        "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+        "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+        "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+        "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+        "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+        "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+        "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+        "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+      },
+      "research_formulas_unchanged": true,
+      "schema": 4,
+      "source_id": "2695047bd0ef3ec6cfbb391be4cc003dd760e2e1fcffdea1e3edc1ca8d98d3f5",
+      "unchanged_executable_sha256": {
+        "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+        "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+        "itch_observe": "3c0aeb463baaf171d4353b7945cdbbf2950faebeee04cadc98db88c38763728b",
+        "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+        "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+        "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+        "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+        "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+        "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+        "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+        "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+        "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+        "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+        "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+        "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+        "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+        "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+        "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+        "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+        "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+        "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+        "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+      }
+    },
+    "previous_source_id": "2695047bd0ef3ec6cfbb391be4cc003dd760e2e1fcffdea1e3edc1ca8d98d3f5",
+    "relationship": "Optional strict observer tape diagnostic, independent raw-prefix export and local historical renderer; matching/feed/research core unchanged",
+    "release_executable_sha256": {
+      "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+      "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+      "diff_replay": "349fe9cde5b2351315f76867f94890576dbe586172011ebe89371ee5b2c34b7d",
+      "itch_observe": "0d4d547eabed879f4a354921c7c2ef9a5cab1f018b3d1c006841eb617c1f3d59",
+      "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+      "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+      "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+      "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+      "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+      "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+      "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+      "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+      "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+      "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+      "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+      "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+      "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+      "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+      "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+      "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+      "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+      "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+      "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+    },
+    "research_formulas_unchanged": true,
+    "schema": 5,
+    "source_id": "c8686c33ce347180ca8ccfda85491af5b3d9e33e1f686f9fc5820d0d5aba15c1",
+    "unchanged_executable_sha256": {
+      "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+      "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+      "diff_replay": "349fe9cde5b2351315f76867f94890576dbe586172011ebe89371ee5b2c34b7d",
+      "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+      "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+      "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+      "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+      "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+      "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+      "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+      "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+      "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+      "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+      "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+      "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+      "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+      "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+      "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+      "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+      "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+      "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+      "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+    }
+  },
+  "previous_source_id": "c8686c33ce347180ca8ccfda85491af5b3d9e33e1f686f9fc5820d0d5aba15c1",
+  "relationship": "Historical tape presentation defaults to 5x, supports explicit playback multiples, shows 12 near-best prices per side and widens the all-price order census; C++ market logic is unchanged",
+  "release_executable_sha256": {
+    "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+    "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+    "diff_replay": "349fe9cde5b2351315f76867f94890576dbe586172011ebe89371ee5b2c34b7d",
+    "itch_observe": "0d4d547eabed879f4a354921c7c2ef9a5cab1f018b3d1c006841eb617c1f3d59",
+    "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+    "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+    "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+    "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+    "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+    "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+    "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+    "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+    "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+    "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+    "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+    "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+    "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+    "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+    "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+    "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+    "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+    "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+    "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+  },
+  "research_formulas_unchanged": true,
+  "schema": 6,
+  "source_id": "6ca67b557627daec6f8272e39679e1e6f2f24b6bb19b268b9bbce0b035dfb017",
+  "unchanged_executable_sha256": {
+    "book_bench": "f914cd781ecc3fb5884075746c66086bc736d317eb162fae5eacfc81c732a5e3",
+    "book_demo": "fd049a521bdaf38154536a8aefa5aeb189f816b06e257b1bd184549677eab6c7",
+    "diff_replay": "349fe9cde5b2351315f76867f94890576dbe586172011ebe89371ee5b2c34b7d",
+    "itch_observe": "0d4d547eabed879f4a354921c7c2ef9a5cab1f018b3d1c006841eb617c1f3d59",
+    "itch_replay": "ca417dec7bc38009d8174779e4a07c43143c7c3d2ec3889bc16ed1d5fdcf50b3",
+    "itch_volume": "912407711e2945732a82e85ce815636ef727a19522c551c08b4ad8e95f703121",
+    "replay_bench": "7a50f7037ba8a052413578a22cb41d23201b049cca3bb853359f54c0971f33eb",
+    "structure_bench": "19044ade38a95267e0f2bafad971f7b9f84c0de0d74450b1ce1fe4899b890126",
+    "tests/closed_loop_test": "07fa6e56ca63d895b87c86b7c45f4de3d81fcb41044ef8c99b8b2d0ec87f37c3",
+    "tests/differential_test": "92410a902daec83a0600a3db9a72f77e4db5e37de5958aa6b502c1def614e243",
+    "tests/exhaustive_test": "d1f9868489e838c77d85f8df1d24a1affb69d3421d49750b31ca0c27a2a05d7b",
+    "tests/feed_book_test": "976307c011c8e08e699164d732e7328c3071af57f435043e04d3cc8398d67da9",
+    "tests/flat_hash_test": "bd4282f312b9d6a47d3d361c8b582c14adf4cb0a77987b6cf18ce0d6bb5c24f4",
+    "tests/fuzz_driver": "59711b6771f20867e1a04b42328e9095cda6e98c15bf8c19d63167943ae381f1",
+    "tests/itch_test": "afb9a0a30e9c423b29bd0e171eb2a2d5444810909d4aebb4b9c61881dc5673e6",
+    "tests/metamorphic_test": "28d3494e673f4efe4c1ecf50d9c74ec611ee6a36175a3688e8313d045ec32e61",
+    "tests/obligation_test": "1e5a0d247d10a7e0304b2ae158b3e114744b9e1aaed8002a5cab7e78609020d2",
+    "tests/order_book_test": "75fc844a39601212a0e1bc1d08e9dfc3c731fbe767fd4532ff1f7f27a8939caa",
+    "tests/ref_map_test": "6ddb3e7e372b8a2407d15fcb0eed2e99d0c4c0b6cc2d89565759b725358cfe46",
+    "tests/replay_test": "96b701b471427cbb33ea7487eb77723cfe584afedd39f02fddebc3a84241a88a",
+    "tests/tick_test": "08cb36d84f66e84a9952b7b6eadd51210fec6adbebe7d5faa78d6c3f6639f3a5",
+    "tests/volume_test": "3ef8aefc800a0c42c3c6f5b7d26c2ae6433a3f10b9ec35412b2368ef70f1374d",
+    "tests/workload_test": "be786bb87ccbe81761868969faea4904e1ab3b4ed39f773de5853099581e8f1d"
+  }
+}

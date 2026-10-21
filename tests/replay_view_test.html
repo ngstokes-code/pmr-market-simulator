@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Replay browser checks</title>
+<style>body{font:14px/1.5 system-ui;margin:20px}iframe{display:block;border:1px solid #ccc;width:1280px;height:1000px;max-width:100%}pre{white-space:pre-wrap}</style>
+<h1>Replay browser checks</h1>
+<p>Serve the repository on localhost, then open this file. No test framework is required.</p>
+<pre id="result">RUNNING</pre>
+<iframe id="view" title="Replay under test"></iframe>
+<script>
+"use strict";
+const view = document.getElementById("view"), result = document.getElementById("result");
+const passed = [];
+function check(value, message) { if (!value) throw new Error(message); passed.push(message); }
+function wait(ms) { return new Promise(resolve => setTimeout(resolve,ms)); }
+view.addEventListener("load", async () => {
+  try {
+    const w = view.contentWindow, d = view.contentDocument, $ = id => d.getElementById(id);
+    const jump = n => { $("timeline").value = n; $("timeline").dispatchEvent(new w.Event("input",{bubbles:true})); };
+    const state = () => Number($("replay").dataset.frame);
+    check(state() === 9, "Opens at the scenario entry");
+    $("next").click();
+    check(state() === 10 && $("queue-orders").children.length === 2, "Next reveals FIFO arrival behind reference #1");
+    $("next").click();
+    check($("optimistic").querySelector("strong").textContent === "10" && $("pessimistic").querySelector("strong").textContent === "100", "Cancellation separates scenario shares ahead");
+    $("next").click();
+    check($("optimistic").querySelector(".outcome").textContent.includes("no excess service"), "Reaching the front alone is not an opportunity");
+    $("next").click();
+    check(!$("queue-orders").querySelector(".order") && $("optimistic").classList.contains("opportunity") && !$("pessimistic").classList.contains("opportunity"), "Empty displayed price and model opportunity remain distinct");
+    jump(15);
+    check($("eligible-shares").textContent === "37" && !d.querySelector('[data-match="102"]').classList.contains("broken"), "P report prints without a future correction leak");
+    const orders = $("queue-orders").textContent;
+    jump(18);
+    check($("eligible-shares").textContent === "31" && d.querySelector('[data-match="102"]').classList.contains("broken"), "Break strikes the original print and corrects eligible volume");
+    check($("queue-orders").textContent !== orders && $("queue-orders").textContent.includes("4 shares"), "Only the intervening E changes remaining displayed quantity");
+    const after = $("queue-orders").textContent;
+    jump(17);
+    check($("queue-orders").textContent === after && !d.querySelector('[data-match="102"]').classList.contains("broken"), "Rewinding a correction restores the tape, not book quantity");
+    jump(16);
+    check($("scenario-clock").textContent.includes("horizon complete"), "Later events cannot extend the one-second scenario");
+    d.querySelector('.side[data-side="S"][data-price="100100"]').click();
+    check($("queue-orders").querySelector('[data-ref="2"]') !== null, "Selecting the ask shows its actual order reference");
+    $("reset").click();
+    check(state() === 9 && $("queue-side").textContent === "Bid", "Reset restores entry and bid selection");
+    for (const frame of w.MSIM_REPLAY.frames) {
+      jump(frame.ordinal);
+      check(state() === frame.ordinal && $("event-title").textContent === frame.title && $("prints").children.length === frame.tape.length, `Snapshot ${frame.ordinal} renders exactly`);
+    }
+    check($("next").disabled && $("cross-shares").textContent === "160", "Terminal frame disables forward stepping and keeps auction volume separate");
+    jump(0);
+    check($("previous").disabled && $("prints").children.length === 0 && !$("empty-tape").hidden, "Initial frame has an empty book/tape and no backward step");
+    d.body.dispatchEvent(new w.KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));
+    check(state() === 1, "Keyboard right arrow advances from the page");
+    $("next").focus();
+    check(d.activeElement === $("next"), "Controls accept keyboard focus");
+    jump(22);
+    $("speed").value = "2";
+    $("play").click();
+    await wait(800);
+    check(state() === 23 && $("play").textContent === "Play", "Playback stops at the terminal frame");
+    $("reset").click();
+    $("play").click();
+    $("play").click();
+    await wait(700);
+    check(state() === 9, "Pause cancels pending advancement");
+    for (const width of [1280,768,390,320]) {
+      view.style.width = width + "px";
+      await wait(40);
+      check(d.documentElement.scrollWidth <= d.documentElement.clientWidth + 1, `No horizontal overflow at ${width}px`);
+    }
+    if (w.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      check(w.getComputedStyle(d.querySelector(".side i")).transitionDuration === "0s", "Reduced-motion preference removes transitions");
+    }
+    result.textContent = `PASS: ${passed.length} browser checks\n` + passed.join("\n");
+    document.title = "PASS — Replay browser checks";
+  } catch (error) {
+    result.textContent = "FAIL: " + error.stack + "\nPassed:\n" + passed.join("\n");
+    document.title = "FAIL — Replay browser checks";
+  }
+});
+view.src = "../docs/replay/feed.html";
+</script>
+</html>

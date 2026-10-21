@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Feed reconstruction — PMR</title>
+  <link rel="stylesheet" href="feed.css">
+  <script defer src="demo-data.js"></script>
+  <script defer src="feed.js"></script>
+</head>
+<body>
+  <a class="skip" href="#controls">Skip to replay controls</a>
+  <main id="replay">
+    <header class="masthead">
+      <div><p class="eyebrow">PMR / Market systems</p><h1>Feed reconstruction</h1></div>
+      <div class="instrument"><strong>ONE</strong><span>Original synthetic session<br>23 ITCH messages · no live data</span></div>
+    </header>
+
+    <section id="controls" class="controls" aria-label="Replay controls">
+      <div class="transport">
+        <button id="play" class="primary" type="button">Play</button>
+        <button id="previous" type="button" aria-label="Previous event">←</button>
+        <button id="next" type="button" aria-label="Next event">→</button>
+        <button id="reset" class="quiet" type="button">Reset</button>
+        <label class="speed">Pace <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+      </div>
+      <div class="position"><span id="event-count">Event — / 23</span><time id="clock">—</time></div>
+      <label class="sr-only" for="timeline">Event position</label>
+      <input id="timeline" type="range" min="0" max="23" value="9" step="1">
+      <div class="chapters" role="group" aria-label="Jump to a moment">
+        <button type="button" data-frame="9">01 <span>Join the queue</span></button>
+        <button type="button" data-frame="13">02 <span>The price empties</span></button>
+        <button type="button" data-frame="18">03 <span>A print is broken</span></button>
+        <span class="pace-note">Event-paced · time gaps compressed</span>
+      </div>
+    </section>
+
+    <section class="event" aria-label="Current event">
+      <span id="event-kind" class="event-kind">Q</span>
+      <div><h2 id="event-title">Loading replay…</h2><p id="event-note">This page displays snapshots exported from the checked demonstration.</p></div>
+      <span id="event-flow" class="flow"></span>
+    </section>
+
+    <div class="workspace">
+      <section class="book panel" aria-labelledby="book-title">
+        <div class="panel-heading"><h2 id="book-title">Displayed book</h2><span id="market-state" class="small-label">Market hours</span></div>
+        <p class="panel-intro">Reported resting orders. Click a side to inspect its queue.</p>
+        <div class="ladder" role="table" aria-label="Displayed price ladder">
+          <div class="ladder-head" role="row"><span role="columnheader">Bid shares</span><span role="columnheader">Price</span><span role="columnheader">Ask shares</span></div>
+          <div id="levels" role="rowgroup"></div>
+        </div>
+        <div class="book-key"><span><i class="bid-key"></i> Bid</span><span><i class="ask-key"></i> Ask</span><span>— = no displayed shares</span></div>
+        <section class="queue" aria-labelledby="queue-title">
+          <div class="queue-heading"><h3 id="queue-title">FIFO at $10.00</h3><span id="queue-side" class="small-label">Bid</span></div>
+          <div class="queue-direction"><span>Front</span><span>Back →</span></div>
+          <div id="queue-orders" class="queue-orders"></div>
+          <p id="queue-caption" class="queue-caption"></p>
+        </section>
+        <section class="scenario" aria-labelledby="scenario-title">
+          <div class="queue-heading"><h3 id="scenario-title">One hypothetical share</h3><span class="small-label">Bid · $10.00 · 1 s horizon</span></div>
+          <p class="panel-intro">Placed behind the initial 100 shares. Not part of displayed depth.</p>
+          <div class="scenario-grid">
+            <div class="scenario-arm" id="optimistic"><h4>Optimistic</h4><p class="assumption">Withdrawals ahead are removed.</p><p class="ahead"><strong>100</strong><span>shares ahead</span></p><div class="ahead-track"><i></i></div><p class="outcome">Waiting for execution service</p></div>
+            <div class="scenario-arm" id="pessimistic"><h4>Pessimistic</h4><p class="assumption">Withdrawals ahead are retained.</p><p class="ahead"><strong>100</strong><span>shares ahead</span></p><div class="ahead-track"><i></i></div><p class="outcome">Waiting for execution service</p></div>
+          </div>
+          <p id="scenario-clock" class="scenario-clock">Scenario starts at market open.</p>
+        </section>
+      </section>
+
+      <section class="tape panel" aria-labelledby="tape-title">
+        <div class="panel-heading"><h2 id="tape-title">Prints &amp; corrections</h2><span class="small-label">Newest first</span></div>
+        <p class="panel-intro">Executions, non-displayed reports and auction crosses stay distinct.</p>
+        <div class="tape-scroll">
+          <table><caption class="sr-only">Reported trade tape at the current event</caption><thead><tr><th scope="col">Time</th><th scope="col">Price</th><th scope="col">Shares</th><th scope="col">Report</th></tr></thead><tbody id="prints"></tbody></table>
+          <p id="empty-tape" class="empty-tape">No reported trades yet.</p>
+        </div>
+        <div class="ledger">
+          <div><span>Eligible reported shares</span><strong id="eligible-shares">0</strong></div>
+          <p>E + printable C + P, net of breaks received so far.</p>
+          <div class="cross-total"><span>Auction-cross shares, separate</span><strong id="cross-shares">0</strong></div>
+        </div>
+        <aside class="reading-note"><h3>Watch the difference</h3><p>A cancellation can move the hypothetical order forward. It cannot supply execution service.</p><p>At 300 ms the bid price empties, but the two scenarios still disagree.</p></aside>
+      </section>
+    </div>
+
+    <footer>
+      <p>A fixed synthetic path under explicit service assumptions—not a venue-fill estimate. No participant identity or aggressor side is inferred.</p>
+      <a href="index.html">Matching visualizer</a>
+      <details><summary>How this replay was checked</summary><p>Every displayed transition comes from checked C++ observations of the original 710-byte session. An independent raw-byte reconstruction agrees. Scenario states come from the research calculation; the browser only renders snapshots.</p><p>Printable <code>E/C</code> executions appear on the tape. <code>P</code> has no known-side displayed queue service. <code>Q</code> stays an auction report. A broken-trade correction changes accounting; it does not restore displayed orders.</p><p>This is a fixed demonstration. Gaps between session events are compressed; animation is not latency. Use the slider or arrow buttons to inspect all 23 messages.</p><p id="provenance" class="provenance"></p></details>
+      <a href="../market-data.md">Experiment &amp; definitions</a>
+    </footer>
+    <p id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+    <noscript><p class="load-error">JavaScript is needed for replay controls. The <a href="../market-data.md">written experiment</a> remains available.</p></noscript>
+  </main>
+</body>
+</html>

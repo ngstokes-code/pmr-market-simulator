@@ -1,0 +1,6 @@
+FROM ubuntu:24.04
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cmake make ninja-build g++ clang libclang-rt-18-dev python3 git ca-certificates
+WORKDIR /work
+COPY . /work
+CMD ["python3", "scripts/run.py", "verify", "--build", "/tmp/msim-build", "--out", "/results/verify", "--config", "Release"]

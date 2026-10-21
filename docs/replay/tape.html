@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark"><title>Recorded order flow — PMR</title>
+  <link rel="stylesheet" href="tape.css"><!-- LOCAL_DATA --><script defer src="tape.js"></script>
+</head>
+<body>
+<main>
+  <header><div><p class="eyebrow">PMR / C++ market systems</p><h1>Inside the opening seconds.</h1><p class="deck">Recorded orders. Reconstructed queues. Every mutation, in file order.</p></div><div class="source"><b id="symbol">NASDAQ / ITCH 5.0</b><span id="date">Local historical replay</span></div></header>
+  <section id="loader"><label>Load a checked local export <input id="file" type="file" accept="application/json,.json"></label><p>Generate one with <code>scripts/render_tape.py</code>. This page starts empty: the raw tape is not included.</p><p>The repository includes a <a href="assets/amd-open-5x.mp4">10-second AMD preview</a> from a selected 50-second excerpt. Capture continuity and public display rights are unverified.</p></section>
+  <p id="error" role="alert" hidden></p>
+  <section class="instrument" aria-label="Historical displayed order book">
+    <div class="readout"><span class="recorded"><i></i> RECORDED REPLAY</span><span id="banner-source"></span><time id="clock">09:30:00.000</time><span id="speed-label">5× playback</span><span class="proof" id="proof">Waiting for a checked export</span></div>
+    <div class="canvas-wrap"><canvas id="scene" width="1440" height="1010" aria-label="Displayed price queues, order-flow counts and reported executions"></canvas></div>
+    <div class="transport"><button id="play" type="button" disabled>Play</button><button id="restart" type="button" disabled>↺ Restart</button><label>Speed <select id="speed"><option value="1">1×</option><option value="3">3×</option><option value="5" selected>5×</option><option value="10">10×</option></select></label><label class="timeline-label" for="timeline">Excerpt position</label><input id="timeline" type="range" min="0" max="30000" value="0" disabled><span id="position">0.0 / 30.0 s</span></div>
+  </section>
+  <section class="caption"><p><b>Read the book.</b> Blue is waiting to buy; red is waiting to sell. New orders enter from the outside. Withdrawals leave outward. Gold marks a reported execution. Squares are individual displayed orders; overflow is counted.</p><p><b>Read the tape.</b> Playback follows reported event order. <code>P</code> does not identify a side or hidden depth; auction crosses stay separate. Corrections after this excerpt are not applied.</p><p><b>Read the clock carefully.</b> It shows feed timestamps, not network latency or measured speed. The filename supplies the date; ITCH does not.</p></section>
+  <details><summary>Input and implementation identity</summary><p id="identity">No export loaded.</p><p>The initial book is rebuilt from the start of the input. Strict C++ replay and independent selected-symbol raw-byte reconstruction check the export.</p><p>The browser applies explicit order updates. It does not match orders or infer participants. A high-water display clock preserves file order through timestamp regressions.</p></details>
+</main>
+</body>
+</html>

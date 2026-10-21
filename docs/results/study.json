@@ -1,0 +1,104 @@
+{
+  "accounting": {
+    "breaks": 116,
+    "companion_groups": 4961,
+    "corrected_nonprintable_shares": 0,
+    "corrected_shares": 9758,
+    "eligible_shares": 1290483705,
+    "independent_check": {
+      "breaks": 116,
+      "cells": 310120,
+      "companion_groups": 4961,
+      "corrected_nonprintable_shares": 0,
+      "corrected_shares": 9758,
+      "implementation": "independent Python framing, field decoding, dictionaries and aggregation",
+      "input_bytes": 11245883092,
+      "input_sha256": "1d0972ffc25b35902ccc3f9069aae517da56903d5795f872902b8697315f30c3",
+      "messages": 368366634,
+      "partitions": 16,
+      "peak_partition_records": 600028,
+      "records": 9599611,
+      "status": "PASS",
+      "terminal_event": "C",
+      "totals": {
+        "CN": 2074983,
+        "CY": 21691703,
+        "E": 1095554900,
+        "P": 173237102,
+        "Q": 118414823
+      }
+    },
+    "p_fraction": 0.1342419910679926,
+    "totals": {
+      "CN": 2074983,
+      "CY": 21691703,
+      "E": 1095554900,
+      "P": 173237102,
+      "Q": 118414823
+    }
+  },
+  "applicable_source_id": "5b1544cee9560332a97ac61b1ec22819c30dc4c3edd1e129abc008a60ba29f6f",
+  "independence": "independent wire/state and all-market accounting; shared high-level research formulas, separately checked by hand ledgers and bounded token-model enumeration",
+  "input": {
+    "bytes": 11245883092,
+    "capture_continuity": "UNVERIFIED",
+    "messages": 368366634,
+    "protocol": "ITCH-5.0",
+    "sha256": "1d0972ffc25b35902ccc3f9069aae517da56903d5795f872902b8697315f30c3",
+    "terminal_event": "C"
+  },
+  "raw_file_sha256": {
+    "observations/events.csv": "31efe8e6e5d07b6fba415a0c19bb417c4ff3a1d0af79b133d6ca8185f982b868",
+    "observations/panel.csv": "aaa1424dee9649e8f3d0bbdbc8cfab5692ac71400503f464bb5f705f69ec39bf",
+    "observations/summary.json": "7b5800f325719a3be0a761475870ccb269f7669ea12c6812aa962dd95bf2b16c",
+    "report/cells.csv": "24ad83225b94524f26efbb1c72669f72ff10108007488b0ff6bcf040b413a54c",
+    "report/intervals.csv": "32de68f5889fd3521ca34f77eb5466912c644da7306d555944eb88be5bccf68c",
+    "report/summary.json": "8a9faaf39515ca8266015b41ff293a96157cb2c0b49f050d7b8980cb8723d675",
+    "report/symbols.csv": "1525c1b4f75f0a06112fe0653f151ada595d554934c62776f82d944b1c1e47d2",
+    "report/system-events.csv": "15ee594949929de2707dd12245fc76e33128c0ae8939b843ed0db511148a5cea"
+  },
+  "research": {
+    "bin_anchor_ns": 34200000000000,
+    "counts": {
+      "C_limit_compatible": 10,
+      "C_limit_incompatible_or_unavailable": 89,
+      "C_price_improved": 3,
+      "assumption_sensitive_probes": 1,
+      "depletions": 40792,
+      "lifetimes": 331675,
+      "optimistic_opportunities": 3,
+      "pessimistic_opportunities": 2,
+      "probes": 1130
+    },
+    "exclusions": {
+      "BIRTH_OUTSIDE_MARKET_HOURS": 6377,
+      "DEPLETION_OUTSIDE_MARKET_HOURS": 3343,
+      "PROBE_NO_EVENT_FIRST_SECOND": 3926
+    },
+    "horizon_ns": 1000000000,
+    "interpretation": "descriptive census; service-scenario outcomes are not actual exchange-fill bounds; capture continuity unverified",
+    "market_end_ns": 57600000113132,
+    "market_start_ns": 34200000036157,
+    "nonfront_execution_events": 90,
+    "rows": 638980,
+    "status": "SUCCESS",
+    "table_sha256": {
+      "auction_pairs.csv": "69b1508d284ede9313398bb946310c0a1e68401ba1b2067625b6a55b4616e2c2",
+      "context_volume.csv": "5603670530c9418b8f121c4e929459c06bf657d04709e1f2eb7cb98c00f5aedc",
+      "depletion_groups.csv": "2bc986c1bdb38355b9b772659426941486a070ed7794393ed40cacfd0f531795",
+      "depletions.csv": "d9258484afa0f636102060e26bd8a854eb400cd9173e2510e85d9b41655fbb6a",
+      "exclusions.csv": "c1ea2e22686991b53d47c25225f77e232708fa09003af4f324b9f36648286dcc",
+      "indications.csv": "2cbaf703db6656e179589392ccfaf892e9ec82336a62bf9dc7fe9930585c9682",
+      "lifetime_groups.csv": "3ddc2ee2a6dfdc6429ca62a73a761c5a8f73506e00d803011b6f9fe0408bfe3c",
+      "lifetimes.csv": "af85ba9c3d294b5eb0228fe5fdbc900505ef9fa973575d1905fbad0b579e81c1",
+      "opportunities.csv": "c828241bd35fa414d084d73e5a296908eed541829b8d953d965d524f5e4f8674",
+      "probe_groups.csv": "2728eaf22ccd48d60bef58b49c8f23e67975f771653526573043b40bd6f6f5ea",
+      "sensitivity.csv": "8512ca7b6edb4d07ea2c5d4208df5ea862df9bd67f16ebc9fc935c4b722d395e",
+      "study_sensitivity.csv": "5a75a6fbcd8823891282acc7056feb865bebdcd5006943cc2c92aee7886226a3"
+    },
+    "unit": "finite-input displayed reference and fixed-entry service scenario"
+  },
+  "revision_relationship": "revision.json",
+  "run_record_sha256": "0ab5be751b2abe4db75591a88bd3f5e36de0e7c05aa15ac94e8c3698cc8c321a",
+  "source_id": "e7c251cfe55afd3196bc69ad084828ae564186da33683c34103fb7caaf2c8907"
+}

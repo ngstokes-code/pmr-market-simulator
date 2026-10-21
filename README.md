@@ -1,182 +1,72 @@
-# PMR Market Simulator (C++17)
+# PMR Market Simulator
 
-![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)
-![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey.svg)
-![Build](https://img.shields.io/badge/Build-CMake-darkblue.svg)
-![Arena](https://img.shields.io/badge/Memory-std%3A%3Apmr%20Monotonic-success.svg)
-![Performance](https://img.shields.io/badge/Throughput-~42M%20ev%2Fs%20(6T%20pinned)-brightgreen.svg)
-![Storage](https://img.shields.io/badge/Storage-LMDB-critical.svg)
-![Export](https://img.shields.io/badge/Export-Optional%20(gRPC%2FProto)-blueviolet.svg)
+**A price-time order book and a Nasdaq ITCH replay, with independent checks for both.**
 
-## Plain-language summary (please read first)
+[Watch the AMD replay](docs/replay/assets/amd-open-5x.mp4) · [Step through matching](docs/replay/index.html) · [Follow a feed example](docs/replay/feed.html) · [Reproduce the checks](docs/reproduce.md)
 
-This repository is a **personal, non-commercial systems/performance engineering project**. It implements a deterministic, event-driven simulator with a limit-order-book data structure so I can learn and benchmark:
+[![AMD opening excerpt at 5× playback: displayed queues, event counters, reported executions and a whole-book order census](docs/replay/assets/amd-open-poster.jpg)](docs/replay/assets/amd-open-5x.mp4)
 
-- cache locality, memory allocation patterns (`std::pmr`), and hot-path design
-- determinism/replay (seeded PRNG + replayable event streams)
-- correctness invariants for a non-trivial state machine under load
+**The clip:** 23,453 reported Nasdaq TotalView-ITCH 5.0 events from a selected 50-second AMD excerpt, shown in 10 seconds at 5×. The date comes from the input filename. Capture continuity and public display rights are unverified; the raw input is not included.
 
-**It is NOT a trading system.**
-- **No live trading**: no order routing, no broker/exchange connectivity
-- **No live market feeds**: no live exchange connectivity; no proprietary/paid data feeds
-- **No strategies/signals**: does not implement alpha, execution logic, or investment advice
-- **No proprietary employer resources**: built on personal time/equipment; not affiliated with any employer
-- **Synthetic data**: default simulation uses generated events and synthetic prices (e.g., around a baseline mid such as **$100**)
+![System map: synthetic matching and ITCH reconstruction are separate contracts, each checked independently](docs/replay/system-map.svg)
 
-If you’re here to evaluate engineering work: thank you. This repo is intended to be unambiguous about scope and usage so it’s easy to review and understand.
+## Two systems. Two different questions.
 
----
+The matching engine answers: **given these orders and this price-time policy, what trades?**
 
-A **high-performance, allocator-aware event simulator** with per-symbol arenas, CPU pinning, and a fast per-symbol **limit order book** implementation. Designed for **repeatable benchmarking**, correctness, and maintainable hot-path code.
+The ITCH reconstructor answers: **given these reported messages, what displayed state follows?**
 
-**Current performance (Windows / MSVC / Ryzen 7 5800X, 6 pinned threads):**
-- **Best:** 42.4M events/sec  
-- **Avg:** 41.2M events/sec  
-(6 symbols, 2,000,000 events, `sigma=0.001`, 1 MiB arena per symbol, `--no-log`)
+It does not invent executions between those paths or claim to reproduce Nasdaq's allocation decisions.
 
-> Results vary by CPU, compiler, and flags. Logging / I/O will reduce throughput drastically.
+## A cancellation is not a fill
 
----
+The short [feed example](docs/replay/feed.html) puts the distinction on screen. A hypothetical bid joins behind 100 shares. Ninety shares cancel; thirty execute. The optimistic scenario removes the canceled quantity from ahead. The pessimistic scenario leaves it there.
 
-## What’s in here
+At 300 ms the displayed price empties. The two scenarios still disagree about execution service.
 
-- **Limit Order Book (LOB)**
-  - Strict **price-time priority**
-  - Internal **tick-based prices** (`int32_t tick`) for determinism and speed
-  - **Flat hash** price levels + pooled level reuse (avoids `std::map<double>` pointer chasing)
-  - Cancel index maintained for correctness (filled resting orders removed from index)
+That is the point of the study: **a displayed price emptying is not proof that an order would have filled.** In the historical panel, 1,130 one-share entries produce 2 pessimistic and 3 optimistic service opportunities under those explicit assumptions. These are not bounds on actual venue fills.
 
-- **Simulation Engine**
-  - Multi-threaded event generation and application (one symbol per thread by default)
-  - Deterministic ID + timestamp generation in benchmark mode (no realtime clock in hot loop)
+The [matching visualizer](docs/replay/index.html) makes the other contract concrete: four synthetic scenes, including sweeps across prices, FIFO priority and capacity rejection. Every command, execution and complete queue state is checked against the independent C++ reference book. The browser draws saved results; it does not perform matching.
 
-- **Performance / Memory**
-  - **Per-symbol** `std::pmr::monotonic_buffer_resource` arenas
-  - CPU pinning support (best-effort on Windows/Linux)
-  - Bounded **SPSC** ring buffer implementation + unit tests (building block for future pipelining)
+## What the checks found
 
-- **Persistence / Export (optional)**
-  - LMDB-backed persistence + replay mode
-  - Optional Protobuf/gRPC **export for local observability/visualization**
-    - Off by default
-    - Intended for telemetry/inspection, not for production pipelines
-    - Recommended in single-thread mode unless otherwise stated in docs
+- **1,103,762** book states were matched against a separately structured reference across every prefix of exhaustively enumerated short histories.
+- **310,120** historical symbol/five-minute accounting cells agree across two different accounting paths, including corrections.
+- **13.424199%** of correction-adjusted `E` + printable `C` + `P` shares in that one input were reported as `P`. See the [denominator and limits](docs/market-data.md#a-separate-volume-result); this says nothing about hidden depth, aggressor side or a trading signal.
 
----
+The tape viewer can show a checked local export, but the repository does not include the raw tape or a preloaded viewer export. [Open the viewer](docs/replay/tape.html) to inspect its controls and load an export you generated locally.
 
-## Repo layout (high level)
+## Run the demonstration
 
-- `include/msim/`
-  - `order_book.hpp` — core order book API + structures
-  - `flat_hash.hpp` — fixed-capacity flat hash with tombstone compaction
-  - `spsc_ring.hpp` — bounded SPSC ring buffer
-  - `simulator.hpp` — simulation engine interface
-- `src/`
-  - `order_book.cpp` — LOB implementation
-  - `simulator.cpp` / `main.cpp` — harness + CLI
-  - `storage/` — LMDB + optional export plumbing (not required for benchmark mode)
-- `tests/`
-  - `spsc_ring_test.cpp`
-  - `order_book_test.cpp`
-- `scripts/`
-  - `bench.sh` — repeatable benchmark runner (multi-config MSVC aware)
+Requirements: Python 3.12 or later, CMake 3.20 or later and a C++17 compiler. The synthetic demo needs no market-data download.
 
----
-
-## Build
-
-### Windows (Visual Studio 2022 / MSVC)
-```bat
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DMSIM_WITH_GRPC=OFF -DMSIM_BUILD_TESTS=ON
-cmake --build build --config Release -j
-ctest --test-dir build -C Release --output-on-failure
+```sh
+python3 scripts/run.py verify --build build-release --out results/release --config Release --jobs 2
+python3 scripts/run.py demo --build build-release --out results/demo
 ```
 
-### Linux / single-config generators (example)
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMSIM_WITH_GRPC=OFF -DMSIM_BUILD_TESTS=ON
-cmake --build build -j
-ctest --test-dir build --output-on-failure
-```
+The demo starts from a 710-byte, 23-message session. It joins reconstruction, queue withdrawal, execution service, replenishment and a broken trade. A seven-share `P` report is later broken: its corrected volume is zero, while the displayed book stays as reported.
 
----
+## What passed; what remains open
 
-## Benchmark (recommended)
+- **macOS Release:** 23/23 checks pass for source `6ca67b5`; the seven-stage demo and checked archive reconstruction also pass.
+- **Linux ARM64 TSan:** 15/16. A child process hit SIGBUS under a forced file-size limit; the cause remains unknown.
+- **Performance:** the retained host measurements have `strict_release_admissible=false`. They support no dedicated-host or full-day feed-throughput claim.
+- **Historical input:** one previously examined day, 32 preselected symbols, visible displayed state only. Capture continuity and current input availability are unverified.
+- **Video:** one selected excerpt is included. Public display rights and capture continuity are unverified.
 
-Use the included script (handles MSVC multi-config correctly and runs multiple reps):
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMSIM_WITH_GRPC=OFF -DMSIM_BUILD_TESTS=ON
-cmake --build build -j
-ctest --test-dir build --output-on-failure
+The source and executable identities for each receipt are in the [revision record](docs/results/revision.json), [verification results](docs/results/verification.json) and [claim register](docs/claims.md). Later presentation work does not silently upgrade an older measurement.
 
-# then:
-scripts/bench.sh
-```
+This is a research and verification project. It has no live routing, venue-equivalent matching, profitability claim or production-deployment claim.
 
-Default config (override via env):
-- `SYMBOLS=SYM1,SYM2,SYM3,SYM4,SYM5,SYM6`
-- `EVENTS=2000000`
-- `THREADS=6`
-- `SIGMA=0.001`
-- `ARENA_BYTES=1048576`
-- `REPS=5`
+## Explore by question
 
-Example override:
-```bat
-THREADS=1 EVENTS=3000000 REPS=3 scripts/bench.sh
-```
+| If you want to know… | Start here |
+| --- | --- |
+| How matching, FIFO and capacity work | [`src/order_book.cpp`](src/order_book.cpp), then the [text walkthrough](docs/demo.txt) |
+| How independent matching checks are built | [`src/reference_book.cpp`](src/reference_book.cpp), [`tests/differential_test.cpp`](tests/differential_test.cpp) and [engineering notes](docs/engineering.md) |
+| How ITCH messages become per-symbol state | [`src/replay.cpp`](src/replay.cpp), [`tools/itch_replay.cpp`](tools/itch_replay.cpp) and [replay boundaries](docs/engineering.md#replay-validate-identity-before-partitioning) |
+| How corrections change reported volume | [`tools/itch_volume.cpp`](tools/itch_volume.cpp) and the [historical study](docs/market-data.md) |
+| What the timing numbers mean | [Performance notes](docs/performance.md) and the [reproduction guide](docs/reproduce.md) |
 
-> Note: Symbols are placeholders for per-instrument workloads; they are not intended to imply usage of any real security or dataset.
-
-### Latest benchmark numbers
-
-**Best**: 42,404,684 ev/s  
-**Avg**: 41,163,937 ev/s  
-
-(Windows 11, MSVC 19.44, Ryzen 7 5800X, 6 pinned threads, `--no-log`)
-
----
-
-## CLI (common flags)
-
-| Flag                  | Meaning                                | Default            |
-| --------------------- | -------------------------------------- | ------------------ |
-| `--events N`          | total simulated iterations/events      | `100000`           |
-| `--symbols CSV`       | comma-separated symbol identifiers     | `SYM1,SYM2,SYM3`   |
-| `--threads N`         | worker threads (typically = symbols)   | auto               |
-| `--sigma X`           | gaussian sigma (fraction of mid)       | `0.001`            |
-| `--arena-bytes BYTES` | arena size per symbol                  | `1048576`          |
-| `--no-log`            | disable persistence entirely           | off                |
-| `--log PATH`          | persist to LMDB                        | off                |
-| `--read PATH`         | replay from LMDB                       | off                |
-| `--dump N`            | when reading, print first N per symbol | off                |
-| `--print-arena`       | show allocator telemetry               | off                |
-| `--grpc HOST:PORT`    | export events to collector             | off                |
-
-> Benchmarking tip: always use `--no-log` unless you're explicitly measuring persistence/export.
-
----
-
-## Why it's fast (short version)
-
-- Tick-based prices avoid floating-key ordering issues and enable tight hashing.
-- Flat hash maps + pooling reduce allocations and pointer chasing vs. trees.
-- Tombstone compaction keeps open-addressing delete-heavy workloads stable.
-- Benchmark harness avoids:
-  - contended global atomics in hot loops
-  - realtime clock calls per event
-  - string hashing/lookup per event
-
----
-
-## More docs
-- `docs/architecture.md` — core architecture + invariants (LOB / harness / arenas)
-- `docs/export.md` — optional export path (e.g., gRPC/Protobuf), batching, and expected overhead
-- `docs/persistence.md` — LMDB log format + replay mode
-
----
-
-## Disclaimer (explicit)
-
-This is a personal, non-commercial performance engineering project for educational purposes. It is **not** used for live trading, does **not** connect to brokers/exchanges, does **not** ingest proprietary or paid market data, and does **not** implement trading strategies, signals, or investment advice. Built on personal time/equipment; not affiliated with or endorsed by any employer.
+Project-authored source is Apache-2.0. [NOTICE](NOTICE) records external algorithm and sample provenance. This project contains no employer code or data.

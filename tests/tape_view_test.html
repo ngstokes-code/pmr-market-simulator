@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tape viewer checks</title>
+<style>body{font:14px system-ui;margin:20px}iframe{width:1280px;max-width:100%;height:1280px;border:1px solid #ccc}pre{white-space:pre-wrap}</style>
+<h1>Tape viewer checks</h1><pre id="result">RUNNING</pre><iframe id="view" title="Tape viewer" src="../docs/replay/tape.html"></iframe>
+<script>
+'use strict';
+const view=document.getElementById('view'),passed=[],wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const check=(v,m)=>{if(!v)throw Error(m);passed.push(m);};
+view.addEventListener('load',async()=>{try{
+ const w=view.contentWindow,d=view.contentDocument,$=id=>d.getElementById(id),api=w.PMR_TAPE,start=34200000000000;
+ const event=(n,t,k,extra={})=>({n,t,raw_ns:start+t,k,updates:[],removes:[],qty:0,price:0,execution_price:0,match:'0',side:'-',printable:'-',code:'-',...extra});
+ const payload={schema:1,verified:true,stock:'ONE',date_label:'original wire-test fixture',start_ns:start,end_ns:start+3e9,input_sha256:'0'.repeat(64),input_bytes:710,source_id:'test',executable_sha256:'test',playback_speed:5,clock_regressions:0,initial:[['9007199254740993','B',100000,100],['2','S',100100,100]],events:[
+ event(1,50e6,'A',{updates:[['3','B',100000,20]],side:'B',price:100000,qty:20}),
+ event(2,100e6,'X',{updates:[['9007199254740993','B',100000,10]],side:'B',price:100000,qty:90}),
+ event(3,200e6,'E',{removes:['9007199254740993'],side:'B',price:100000,qty:10,printable:'Y',match:'100'}),
+ event(4,300e6,'C',{removes:['3'],side:'B',price:100000,execution_price:99999,qty:20,printable:'N',match:'101'}),
+ event(5,500e6,'P',{price:100000,qty:7,match:'102'}),event(6,2100e6,'B',{match:'102'}),event(7,2200e6,'Q',{price:100010,qty:80,match:'500',code:'O'})]};
+ api.load(payload);api.seek(0);check(api.state().orders.length===2,'Exact initial book, including wide reference identity');check($('speed-label').textContent==='5× playback','Five-times playback is explicitly labelled by default');
+ api.seek(100);check(api.state().orders.find(o=>o[0]==='9007199254740993')[3]===10,'Partial withdrawal changes only the supplied quantity');check(api.state().tape.length===0,'Withdrawal never creates a tape print');
+ api.seek(300);check(api.state().orders.length===1,'Both execution reductions apply');check(api.state().tape.length===1,'Nonprintable C reduces the book but is absent from prints');
+ api.seek(500);check(api.state().orders.length===1&&api.state().tape[0].k==='P','P reports do not create displayed depth');
+ api.seek(2200);check(api.state().orders.length===1,'Broken report never restores book');check(api.state().tape.find(p=>p.match==='102'&&p.k==='P').broken,'Retained print is marked broken');check(api.state().tape[0].k==='Q','Auction report remains separately classified');check(api.state().counts.prints===2,'Auction and nonprintable C are outside print counter');
+ api.seek(0);check(api.state().tape.length===0&&api.state().orders.length===2,'Rewind removes future reports and restores exact prefix');
+ for(const ms of [50,100,200,500,3000]){api.frame(ms);const a=api.state();api.seek(ms);check(JSON.stringify(a.orders)===JSON.stringify(api.state().orders),'Capture and seek agree at '+ms+' ms');}
+ $('restart').click();$('play').click();await wait(180);$('play').click();const stopped=api.state().cursor;check(stopped>0,'Playback advances');await wait(100);check(api.state().cursor===stopped,'Pause stops advancement');
+ $('speed').value='10';$('speed').dispatchEvent(new w.Event('change'));check($('speed-label').textContent==='10× playback','Speed is explicitly labelled');
+ const bad=JSON.parse(JSON.stringify(payload));bad.events[0].removes=['missing'];let refused=false;try{api.load(bad);}catch(e){refused=true;}check(refused,'Absent-reference patch rejected before load');
+ const unsafe=JSON.parse(JSON.stringify(payload));unsafe.initial[0][0]=9007199254740993;refused=false;try{api.load(unsafe);}catch(e){refused=true;}check(refused,'Numeric identities rejected');
+ api.load(payload);check(api.state().playing===!w.matchMedia('(prefers-reduced-motion: reduce)').matches,'Reduced motion starts paused');api.seek(0);
+ for(const width of [1280,768,390,320]){view.style.width=width+'px';await wait(20);check(d.documentElement.scrollWidth<=d.documentElement.clientWidth+1,'Page fits '+width+' px; canvas pans internally');}
+ document.getElementById('result').textContent='PASS: '+passed.length+' tape browser checks\n'+passed.join('\n');document.title='PASS — Tape viewer checks';
+}catch(e){document.getElementById('result').textContent='FAIL: '+e.stack+'\n'+passed.join('\n');document.title='FAIL — Tape viewer checks';}});
+</script></html>

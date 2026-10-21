@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Inside an order book — PMR</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="book-data.js"></script><script defer src="replay.js"></script>
+</head>
+<body>
+<main>
+  <header><div><p class="eyebrow">PMR / C++ market systems</p><h1>Inside an order book</h1><p class="intro">Price picks the queue. Time picks the order. Step through both rules.</p></div><div><a href="tape.html">Historical tape ↗</a> · <a href="feed.html">Feed example ↗</a></div></header>
+  <nav id="scenes" aria-label="Choose a demonstration"></nav>
+  <section class="transport" aria-label="Playback controls">
+    <button id="play" class="primary" type="button">Pause</button><button id="back" type="button" aria-label="Previous command">←</button><button id="next" type="button" aria-label="Next command">→</button><button id="restart" type="button">Restart scene</button>
+    <label for="pace">Pace <select id="pace"><option value="0.25">Slow</option><option value="1" selected>Normal</option><option value="3">Fast</option></select></label>
+    <span id="progress"></span><label class="sr-only" for="timeline">Command position</label><input id="timeline" type="range" min="0" max="1" value="0">
+  </section>
+  <section class="explanation" aria-live="polite" aria-atomic="true"><span id="status">C++ reference trace</span><div><h2 id="action">Loading the book…</h2><p id="reason">The browser shows recorded results. Matching happens in C++.</p></div><span id="scene-scale"></span></section>
+  <section class="stage" aria-label="Animated order book">
+    <div class="stage-top"><span><i class="buy-dot"></i> Buyers</span><span class="stage-key">Block = waiting order · number = shares · oldest nearest the price</span><span>Sellers <i class="sell-dot"></i></span></div>
+    <div class="drawing"><svg id="book" viewBox="0 0 1100 590" role="group" aria-label="Waiting order queues grouped by price"><g id="rows"></g><g id="routes" aria-hidden="true"></g><g id="orders"></g><g id="effects" aria-hidden="true"></g></svg><p id="load-error" hidden></p></div>
+    <div class="stage-bottom"><span id="inspect">Point at a block to inspect an order. Click to pause.</span><span><b id="live-count">0</b> waiting orders <i>/</i> <b id="price-count">0</b> prices</span></div>
+  </section>
+  <section class="trades" aria-label="Executed trades"><h2>Trades <span>Only actual matches appear here. Cancellations do not.</span></h2><div id="tape"></div></section>
+  <details id="structure"><summary>How the book is stored</summary><div class="structure-grid"><div><h3>Sorted price indexes <span>best price at the right end</span></h3><div class="index-row"><span>Buy</span><div id="bid-index"></div></div><div class="index-row"><span>Sell</span><div id="ask-index"></div></div></div><div class="storage"><h3>Reserved order capacity</h3><div id="capacity-track"><i></i></div><p id="capacity"></p><p id="lookup">Cancel uses an ID lookup, then unlinks the queue entry.</p></div></div></details>
+  <footer><p><strong>What you see:</strong> Four synthetic scenes. Each command, execution and full queue state is checked against an independent C++ reference book.</p><p><strong>What the animation means:</strong> It slows events so you can inspect them; its pace is not throughput or latency evidence.</p><details><summary>Reproducibility and controls</summary><p id="identity"></p><p>Each scene starts from a checked state. Playing continues to the next scene; pause, step or scrub to inspect. Reduced-motion preference starts playback paused.</p></details><a href="../engineering.md">Implementation &amp; invariants</a></footer>
+  <noscript><p>JavaScript is required for the visualizer. See the <a href="../demo.txt">text matching example</a>.</p></noscript>
+</main>
+</body>
+</html>

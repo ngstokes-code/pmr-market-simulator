@@ -1,2 +1,2 @@
-# .gitattributes
-lmdb/* linguist-vendored
+# The published tables are emitted by Python's CSV writer using RFC-style CRLF.
+*.csv whitespace=cr-at-eol

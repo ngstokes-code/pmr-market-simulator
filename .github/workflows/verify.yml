@@ -1,0 +1,32 @@
+name: C++17 verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  native-linux:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {config: Debug, sanitize: '', cc: clang, args: '--compiler clang++'}
+          - {config: Release, sanitize: '', cc: gcc, args: ''}
+          - {config: Release, sanitize: 'address,undefined', cc: clang, args: '--bounded --compiler clang++'}
+          - {config: Release, sanitize: 'thread', cc: clang, args: '--bounded --compiler clang++'}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify on native Linux x86-64
+        env:
+          CC: '${{ matrix.cc }}'
+        run: |
+          if [ '${{ matrix.sanitize }}' = thread ]; then
+            export CXXFLAGS="${CXXFLAGS:+$CXXFLAGS }-shared-libsan"
+            export LD_LIBRARY_PATH="$(clang++ -print-runtime-dir)${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          fi
+          python3 scripts/run.py verify --build build --out results/verify --config '${{ matrix.config }}' --sanitize '${{ matrix.sanitize }}' ${{ matrix.args }} --jobs 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-${{ matrix.config }}-${{ strategy.job-index }}
+          path: results/verify

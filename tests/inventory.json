@@ -1,0 +1,10 @@
+{
+  "matching_policy_and_capacity": ["order_book_test", "tick_test"],
+  "independent_matching": ["differential_test", "metamorphic_test", "exhaustive_test", "workload_test", "fuzz_driver", "obligation_test", "trace_capacity-exact-fill", "trace_freed-slot", "trace_sweep-and-rest"],
+  "concrete_storage": ["flat_hash_test", "ref_map_test"],
+  "itch_framing": ["itch_test"],
+  "feed_reconstruction": ["feed_book_test", "closed_loop_test"],
+  "replay_ownership_and_failure": ["replay_test", "replay_boundary_test"],
+  "accounting_and_research": ["volume_test", "volume_cli_test", "research_test"],
+  "evidence_integrity": ["release_regression_test", "benchmark_test"]
+}

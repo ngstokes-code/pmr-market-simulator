@@ -1,91 +1,138 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <memory_resource>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "msim/event.hpp"
+#include "msim/book_types.hpp"
 #include "msim/flat_hash.hpp"
+#include "msim/types.hpp"
 
 namespace msim {
 
-struct Order {
-  uint64_t id;
-  double price;
-  int qty;
-  Side side;     // BUY or SELL
-  uint64_t ts_ns;
-};
-
+// Price-time priority limit order book for one instrument.
+//
+// Internal storage is sized from BookLimits and allocated from `mr` in the
+// constructor. Caller-owned execution output and diagnostics can allocate.
+// A single thread owns each book; `mr` must outlive it.
+//
+// Layout:
+//   orders  one slab of fixed-size nodes, linked into per-level FIFO lists
+//           by 32-bit indices. Each node knows its level.
+//   levels  one slab of levels for both sides.
+//   ladder  per side, the active levels sorted so the best price is last,
+//           plus a hash from tick to level. Adding to an existing level is
+//           one hash lookup. Opening or closing a level searches from the
+//           best end and moves the suffix above that position. Near-best
+//           changes are cheap; deep arbitrary changes can move O(levels).
+//   index   order id -> node, so a cancel uses one hash lookup.
 class OrderBook {
  public:
-  // tick_size defaults to 0.01. Keep default so existing call sites don't change.
-  OrderBook(std::string symbol, std::pmr::memory_resource* mr, double tick_size = 0.01);
+  // Throws std::invalid_argument if a limit does not fit a 32-bit index.
+  OrderBook(std::string symbol, std::pmr::memory_resource* mr,
+            BookLimits limits = {});
 
-  int add_order(const Order& o, double& trade_price);
-  bool cancel_order(uint64_t order_id);
+  OrderBook(const OrderBook&) = delete;
+  OrderBook& operator=(const OrderBook&) = delete;
 
-  std::optional<double> best_bid() const;
-  std::optional<double> best_ask() const;
+  // Matches o against the opposite side, best price first and oldest first
+  // within a price, and appends one Execution per resting order it touches.
+  // Any remainder rests at o.tick behind existing orders at that price.
+  //
+  // A rejected order changes nothing. Every rejection, CapacityFull
+  // included, is decided before the first execution.
+  //
+  // Insufficient caller output capacity is reserved before mutation. If
+  // reservation throws, both book and output retain their prior state.
+  // Mutation then performs no allocation and appending cannot throw.
+  // A caller reserving max_resting_orders avoids output planning/allocation.
+  //
+  // Expected cost: O(1) per execution with well-distributed hash keys, plus
+  // ladder search/movement up to O(levels). A hash operation is worst-case
+  // linear in its table capacity. Full limits or insufficient caller output
+  // reservation require a read-only crossing-order scan before mutation.
+  [[nodiscard]] AddResult add(const Order& o, std::vector<Execution>& out);
 
-  const std::string& symbol() const { return symbol_; }
+  // Removes a resting order. Returns false if no order with this id rests.
+  // One hash lookup and O(1) unlink, plus a ladder update if the price empties.
+  // Expected constant index lookup; worst-case O(orders + levels).
+  [[nodiscard]] bool cancel(OrderId id) noexcept;
 
-  // Debug / test hook (helps validate index cleanup & invariants).
-  std::size_t index_size() const noexcept { return index_.size(); }
+  std::optional<Tick> best_bid() const noexcept { return best(Side::BUY); }
+  std::optional<Tick> best_ask() const noexcept { return best(Side::SELL); }
+
+  std::size_t resting_orders() const noexcept { return index_.size(); }
+  std::size_t levels(Side s) const noexcept { return ladder(s).keys.size(); }
+  const BookLimits& limits() const noexcept { return limits_; }
+  const std::string& symbol() const noexcept { return symbol_; }
+
+  // Validates then copies both sides. Diagnostic allocation is permitted;
+  // corrupted indices throw rather than being traversed. Worst-case O(n^2).
+  BookSnapshot snapshot() const;
+
+  // Full consistency check (worst-case quadratic hash work). Returns false and, if
+  // `why` is non-null, describes the first violated invariant.
+  bool check_invariants(std::string* why = nullptr) const;
 
  private:
-  struct OrderRef {
-    Side side;
-    int32_t tick;
+  friend struct OrderBookTestAccess;
+  using Index = std::uint32_t;
+  static constexpr Index kNil = UINT32_MAX;
+
+  struct Node {
+    OrderId id;
+    Qty qty;
+    Index prev;
+    Index next;  // also links the free list
+    Index level;
   };
 
   struct Level {
-    int32_t tick{0};
-    std::pmr::deque<Order> q;
-
-    Level(int32_t t, std::pmr::memory_resource* mr) : tick(t), q(mr) {}
-
-    void reset(int32_t t) {
-      tick = t;
-      q.clear();
-    }
+    Tick tick;
+    Index head;
+    Index tail;
+    Side side;
   };
 
-  // Price -> tick conversions (positive price assumption is fine for this sim)
-  int32_t price_to_tick(double px) const noexcept;
-  double tick_to_price(int32_t t) const noexcept { return double(t) * tick_size_; }
+  // Keys grow toward the best price on both sides: the tick for bids, its
+  // negation for asks. One search routine then serves both sides.
+  struct Ladder {
+    std::pmr::vector<Tick> keys;
+    std::pmr::vector<Index> levels;
+    FlatHashMap<Tick, Index> by_tick;
+    Ladder(std::pmr::memory_resource* mr, std::size_t max_levels)
+        : keys(mr), levels(mr), by_tick(mr, max_levels) {}
+  };
 
-  Level* get_or_create_level(Side side, int32_t tick);
-  Level* get_level(Side side, int32_t tick) noexcept;
-  const Level* get_level(Side side, int32_t tick) const noexcept;
+  static Tick key(Side s, Tick t) noexcept { return s == Side::BUY ? t : -t; }
+  static bool crosses(Side incoming, Tick limit, Tick resting) noexcept {
+    return incoming == Side::BUY ? resting <= limit : resting >= limit;
+  }
 
-  void remove_level_if_empty(Side side, int32_t tick, Level* lvl);
+  Ladder& ladder(Side s) noexcept { return s == Side::BUY ? bids_ : asks_; }
+  const Ladder& ladder(Side s) const noexcept {
+    return s == Side::BUY ? bids_ : asks_;
+  }
+  std::optional<Tick> best(Side s) const noexcept;
 
-  void add_active_tick(Side side, int32_t tick);
-  void remove_active_tick(Side side, int32_t tick);
-  void recompute_best(Side side);
-
-  // Fixed-capacity maps to avoid pmr monotonic rehash leaks.
-  // Tune caps as needed.
-  FlatHashMap<int32_t, Level*> bid_levels_;
-  FlatHashMap<int32_t, Level*> ask_levels_;
-  FlatHashMap<uint64_t, OrderRef> index_;
-
-  std::pmr::vector<int32_t> bid_ticks_;
-  std::pmr::vector<int32_t> ask_ticks_;
-  std::pmr::vector<Level*> free_levels_;
-
-  std::optional<int32_t> best_bid_tick_;
-  std::optional<int32_t> best_ask_tick_;
+  static std::size_t lower_bound(const Ladder& l, Tick k) noexcept;
+  Index find_level(Side s, Tick t) const noexcept;
+  Index open_level(Side s, Tick t) noexcept;
+  void close_level(Index lvl) noexcept;
+  bool fits_after_matching(const Order& o) const noexcept;
 
   std::string symbol_;
-  std::pmr::memory_resource* mr_{nullptr};
-
-  double tick_size_{0.01};
-  double inv_tick_{100.0};
+  BookLimits limits_;
+  std::pmr::vector<Node> nodes_;
+  std::pmr::vector<Level> levels_;
+  std::pmr::vector<Index> free_levels_;
+  Index free_node_ = kNil;
+  Ladder bids_;
+  Ladder asks_;
+  FlatHashMap<OrderId, Index> index_;
 };
 
 }  // namespace msim

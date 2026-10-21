@@ -1,0 +1,15 @@
+# msim-trace 1
+# limits 8,3,200
+#
+# The ask side holds its three allowed levels. A sell at a fourth price
+# would need a new ask level if it rested, but it executes in full against
+# the bid at 94, so it never rests and must be accepted.
+#
+# Found by the differential test against a planted off-by-one in the
+# capacity pre-scan (crossing > qty instead of crossing >= qty), and shrunk
+# from 2000 commands to these 5.
+1 add 1084 S 99 6
+2 add 1088 S 97 4
+3 add 1089 S 95 9
+4 add 1091 B 94 3
+5 add 1198 S 94 3

@@ -1,0 +1,7 @@
+spread,side,entries,complete_entries,censored_entries,level_depleted_entries,level_no_depletion_entries,level_censored_entries,lost_best_entries,pessimistic_opportunities,optimistic_opportunities,assumption_sensitive,median_time_to_level_depletion_ns_among_observed,pessimistic_opportunity_fraction,pessimistic_adverse_available,pessimistic_mean_adverse_half_price_units,pessimistic_median_adverse_half_price_units,optimistic_opportunity_fraction,optimistic_adverse_available,optimistic_mean_adverse_half_price_units,optimistic_median_adverse_half_price_units
+ONE_CENT,B,46,46,0,7,39,0,9,0,0,0,101333687,0.0,0,NA,NA,0.0,0,NA,NA
+ONE_CENT,S,46,46,0,10,36,0,12,0,0,0,142939725.5,0.0,0,NA,NA,0.0,0,NA,NA
+SUBCENT,B,6,6,0,2,4,0,2,0,0,0,91188805.0,0.0,0,NA,NA,0.0,0,NA,NA
+SUBCENT,S,6,6,0,0,6,0,0,0,0,0,NA,0.0,0,NA,NA,0.0,0,NA,NA
+WIDER,B,513,513,0,66,447,0,134,0,1,1,51360058.5,0.0,0,NA,NA,0.001949317738791423,1,-1100,-1100
+WIDER,S,513,513,0,57,456,0,112,2,2,0,118411255,0.003898635477582846,2,550,550.0,0.003898635477582846,2,550,550.0

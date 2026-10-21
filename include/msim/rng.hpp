@@ -1,4 +1,4 @@
-// rng.hpp
+// SplitMix64 seeds both xoroshiro128+ state words from one reproducible seed.
 #pragma once
 #include <array>
 #include <cstdint>
@@ -33,7 +33,7 @@ struct Xoroshiro128Plus {
   }
   double next_uniform01() {  // [0,1)
     // 53-bit mantissa -> double in [0,1)
-    return (next_u64() >> 11) * (1.0 / 9007199254740992.0);
+    return static_cast<double>(next_u64() >> 11) * (1.0 / 9007199254740992.0);
   }
 };
 
@@ -46,5 +46,6 @@ inline int rand_int(Xoroshiro128Plus& rng, int min, int max) {
 }
 
 inline size_t rand_index(Xoroshiro128Plus& rng, size_t max_exclusive) {
-  return static_cast<size_t>(rng.next_uniform01() * max_exclusive);
+  return static_cast<size_t>(rng.next_uniform01() *
+                             static_cast<double>(max_exclusive));
 }
